@@ -15,7 +15,7 @@ Scena Blendera, PSD i skrypty Pythona zostają tylko lokalnie.
 2. **Commituj tylko swoje pliki, wymieniając je z nazwy:** `git add ścieżka/pliku`. Nigdy `git add -A`, `git add .` ani `git commit -a`.
 3. **Sprawdź, co commitujesz:** `git diff --cached` przed commitem. Jeśli w pliku są cudze zmiany, nie commituj go – zgłoś to użytkownikowi.
 4. **Przed pushem:** `git fetch origin`. Wszyscy agenci dzielą ten sam folder i to samo `.git`, więc zwykle nic nie trzeba ściągać. Jeśli jednak `origin/main` ma nowe commity (push z innego komputera), nie rób `pull`, `rebase`, `stash` ani `checkout` – zmieniłyby pliki innych agentów. Zgłoś to użytkownikowi. Nigdy `git push --force` na `main`.
-5. **Większe zmiany** (nowy wygląd, przebudowa `viewer.js`) rób na osobnej gałęzi, np. `agent/<nazwa>-<temat>`, i sprawdź podgląd z Vercela przed scaleniem do `main`.
+5. **Większe zmiany** (nowy wygląd, przebudowa `viewer.js`) rób na osobnej gałęzi we **własnym folderze**: `git worktree add ..\arc-<temat> -b agent/<temat>`. Nigdy nie rób `git checkout` / `git switch` w tym folderze – podmieniłoby pliki wszystkim agentom. Push gałęzi daje podgląd na Vercelu. Scalenie do `main` dopiero po akceptacji użytkownika, potem `git worktree remove ..\arc-<temat>`.
 6. **Nie usuwaj i nie przenoś cudzych plików**, nie cofaj cudzych commitów bez zgody użytkownika.
 
 ## Strona – szybkie fakty
