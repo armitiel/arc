@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARC — Murale</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+<main class="layout">
+  <header>
+    <p class="label">ARC <span></span> Studium muralu</p>
+    <h1>Mural</h1>
+    <div class="tabs" role="group" aria-label="Rodzaj podglądu">
+      <button id="show-photo" aria-pressed="true">Wizualizacja</button>
+      <button id="show-model" aria-pressed="false">Model 3D</button>
+    </div>
+  </header>
+  <figure class="stage" id="photo">
+    <img src="./wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Złoty ornament i łagodne pasma koloru na ścianie z ceglanym przejściem">
+    <figcaption>Wzór 1 · ściana S — przejście</figcaption>
+  </figure>
+  <figure class="stage" id="model" hidden>
+    <div id="viewport" aria-label="Interaktywny model wnętrza">
+      <img id="poster" src="./podglad.png" width="750" height="1000" alt="Podgląd modelu sali od strony przejścia">
+      <div id="zoom-tools" role="group" aria-label="Powiększenie modelu" hidden>
+        <button type="button" id="zoom-out" aria-label="Oddal">−</button>
+        <span id="zoom-level">100%</span>
+        <button type="button" id="zoom-in" aria-label="Powiększ">+</button>
+      </div>
+      <div id="pattern-navigation" role="group" aria-label="Przewijanie wzorów" hidden>
+        <button type="button" id="previous-pattern" aria-label="Poprzedni wzór" aria-controls="pattern-caption">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        </button>
+        <button type="button" id="next-pattern" aria-label="Następny wzór" aria-controls="pattern-caption">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+      <p id="status" role="status"></p>
+    </div>
+    <figcaption id="pattern-caption" aria-live="polite">Ściana S — przejście</figcaption>
+  </figure>
+</main>
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>

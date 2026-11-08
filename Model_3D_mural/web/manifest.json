@@ -1,0 +1,190 @@
+{
+ "objects": {
+  "Sciana_N": {
+   "lm": "Sciana_N_lm.jpg",
+   "alb": "Sciana_N_alb.jpg",
+   "S": 19.063323974609375
+  },
+  "Sciana_E": {
+   "lm": "Sciana_E_lm.jpg",
+   "alb": "Sciana_E_alb.jpg",
+   "S": 35.13053894042969
+  },
+  "Sciana_S": {
+   "lm": "Sciana_S_lm.jpg",
+   "alb": "Sciana_S_alb.jpg",
+   "S": 26.109134674072266
+  },
+  "Sciana_W": {
+   "lm": "Sciana_W_lm.jpg",
+   "alb": "Sciana_W_alb.jpg",
+   "S": 38.815486907958984
+  },
+  "Sklepienie": {
+   "lm": "Sklepienie_lm.jpg",
+   "alb": "Sklepienie_alb.jpg",
+   "S": 0.3455018997192383
+  },
+  "Podloga": {
+   "lm": "Podloga_lm.jpg",
+   "alb": "Podloga_alb.jpg",
+   "S": 25.652809143066406
+  },
+  "Korytarz": {
+   "lm": "Korytarz_lm.jpg",
+   "alb": "Korytarz_alb.jpg",
+   "S": 34.83763122558594
+  },
+  "Meble": {
+   "lm": "Meble_lm.jpg",
+   "alb": "Meble_alb.jpg",
+   "S": 4.126001834869385
+  }
+ },
+ "cameras": [
+  {
+   "name": "Mural_front",
+   "pos": [0.2, 1.65, -2.48],
+   "target": [0.16, 2.02, 2.8],
+   "vfov": 51,
+   "minHfov": 65
+  },
+  {
+   "name": "Mural_left",
+   "pos": [1.82, 1.65, -2.38],
+   "target": [0.12, 2.02, 2.8],
+   "vfov": 54,
+   "minHfov": 65
+  },
+  {
+   "name": "Mural_right",
+   "pos": [-1.82, 1.65, -2.38],
+   "target": [0.12, 2.02, 2.8],
+   "vfov": 54,
+   "minHfov": 65
+  },
+  {
+   "name": "Kam_srodek",
+   "pos": [0, 1.65, 0],
+   "target": [-1.75, 1.98, 2.8],
+   "vfov": 68,
+   "minHfov": 68
+  },
+  {
+   "name": "Kam_jak_foto3_wejscie",
+   "pos": [
+    -1.3,
+    1.5,
+    2.55
+   ],
+   "target": [
+    -0.5945,
+    1.7713,
+    -0.3532
+   ],
+   "vfov": 73.74
+  },
+  {
+   "name": "Kam_jak_foto1_kredens",
+   "pos": [
+    -2.0,
+    1.45,
+    1.6
+   ],
+   "target": [
+    0.6575,
+    1.8652,
+    0.2713
+   ],
+   "vfov": 73.74
+  },
+  {
+   "name": "Kam_jak_foto2_przejscie",
+   "pos": [
+    0.9,
+    1.4,
+    -2.2
+   ],
+   "target": [
+    0.0419,
+    1.686,
+    0.6604
+   ],
+   "vfov": 73.74
+  },
+  {
+   "name": "Kam_frontalnie_sciana_N",
+   "pos": [
+    0.0,
+    1.6,
+    2.45
+   ],
+   "target": [
+    0.0,
+    1.8844,
+    -0.5365
+   ],
+   "vfov": 68.04
+  },
+  {
+   "name": "Kam_frontalnie_sciana_E",
+   "pos": [
+    -2.45,
+    1.6,
+    -0.0
+   ],
+   "target": [
+    0.5365,
+    1.8844,
+    0.0
+   ],
+   "vfov": 68.04
+  },
+  {
+   "name": "Kam_frontalnie_sciana_S",
+   "pos": [
+    0.0,
+    1.6,
+    -2.45
+   ],
+   "target": [
+    -0.0,
+    1.8844,
+    0.5365
+   ],
+   "vfov": 68.04
+  },
+  {
+   "name": "Kam_frontalnie_sciana_W",
+   "pos": [
+    2.45,
+    1.6,
+    -0.0
+   ],
+   "target": [
+    -0.5365,
+    1.8844,
+    0.0
+   ],
+   "vfov": 68.04
+  }
+ ],
+ "walls": [
+  {
+   "key": "N",
+   "label": "Sciana N - drzwi i okno"
+  },
+  {
+   "key": "E",
+   "label": "Sciana E - kredens"
+  },
+  {
+   "key": "S",
+   "label": "Sciana S - przejscie"
+  },
+  {
+   "key": "W",
+   "label": "Sciana W - grzejnik"
+  }
+ ]
+}
