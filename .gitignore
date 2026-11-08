@@ -1,4 +1,4 @@
-﻿# Repo zawiera tylko strone podgladowa (Model_3D_mural/web)
+# Repo zawiera tylko strone podgladowa (Model_3D_mural/web)
 /*
 !/.gitignore
 !/README.md
@@ -34,6 +34,7 @@
 !/Model_3D_mural/web/wzory/
 /Model_3D_mural/web/wzory/*
 !/Model_3D_mural/web/wzory/psd.json
-!/Model_3D_mural/web/wzory/PSD-S-*.png
+!/Model_3D_mural/web/wzory/PSD-S-*.webp
 !/.github/
 !/Model_3D_mural/web/vendor/
+!/Model_3D_mural/web/vendor-three.mjs

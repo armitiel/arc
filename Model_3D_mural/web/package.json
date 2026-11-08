@@ -1,8 +1,15 @@
 {
-  "dependencies": {
-    "three": "0.180.0"
-  },
+  "name": "arc-mural-podglad",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Strona podgladowa muralu ARC (three.js, bez budowania)",
+  "type": "module",
   "scripts": {
-    "start": "python -m http.server 8765 --bind 127.0.0.1"
+    "start": "serve -l 8765 .",
+    "vendor": "node vendor-three.mjs"
+  },
+  "devDependencies": {
+    "serve": "14.2.4",
+    "three": "0.180.0"
   }
 }

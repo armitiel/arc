@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ARC — Murale</title>
+<title>RAC — Murale</title>
 <link rel="stylesheet" href="./style.css">
-<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.min.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
 <main class="layout">
   <header>
-    <p class="label">ARC <span></span> Studium muralu</p>
+    <p class="label">RAC</p>
     <h1>Mural</h1>
     <div class="tabs" role="group" aria-label="Rodzaj podglądu">
       <button id="show-photo" aria-pressed="true">Wizualizacja</button>
@@ -24,11 +24,6 @@
   <figure class="stage" id="model" hidden>
     <div id="viewport" aria-label="Interaktywny model wnętrza">
       <img id="poster" src="./podglad.png" width="750" height="1000" alt="Podgląd modelu sali od strony przejścia">
-      <div id="zoom-tools" role="group" aria-label="Powiększenie modelu" hidden>
-        <button type="button" id="zoom-out" aria-label="Oddal">−</button>
-        <span id="zoom-level">100%</span>
-        <button type="button" id="zoom-in" aria-label="Powiększ">+</button>
-      </div>
       <div id="pattern-navigation" role="group" aria-label="Przewijanie wzorów" hidden>
         <button type="button" id="previous-pattern" aria-label="Poprzedni wzór" aria-controls="pattern-caption">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
@@ -39,7 +34,14 @@
       </div>
       <p id="status" role="status"></p>
     </div>
-    <figcaption id="pattern-caption" aria-live="polite">Ściana S — przejście</figcaption>
+    <figcaption class="model-meta">
+      <span id="pattern-caption" aria-live="polite">Ściana S — przejście</span>
+      <div id="zoom-tools" role="group" aria-label="Powiększenie modelu" hidden>
+        <button type="button" id="zoom-out" aria-label="Oddal">−</button>
+        <span id="zoom-level">100%</span>
+        <button type="button" id="zoom-in" aria-label="Powiększ">+</button>
+      </div>
+    </figcaption>
   </figure>
 </main>
 <script type="module" src="./viewer.js"></script>
