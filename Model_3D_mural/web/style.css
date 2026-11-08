@@ -54,13 +54,6 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 .model-meta #pattern-caption { grid-column: 1; grid-row: 1; }
 .model-meta #pattern-navigation { grid-column: 2; grid-row: 1; }
 .model-meta #zoom-tools { grid-column: 3; grid-row: 1; justify-self: end; }
-@media (max-width: 560px) {
-  .model-meta { grid-template-columns: minmax(0, 1fr) auto; }
-  .model-meta #pattern-navigation { grid-column: 1 / -1; grid-row: 1; }
-  .model-meta #pattern-navigation button { flex: 1 1 0; }
-  .model-meta #pattern-caption { grid-row: 2; }
-  .model-meta #zoom-tools { grid-column: 2; grid-row: 2; }
-}
 #viewport { position: relative; background: #d2c8bb; }
 #viewport canvas { touch-action: none; cursor: grab; }
 #viewport canvas:active { cursor: grabbing; }
@@ -126,3 +119,19 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 #look-hint.is-hidden { opacity: 0; }
 @keyframes look-hint-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 @media (prefers-reduced-motion: reduce) { #look-hint { animation: none; transition: none; } }
+
+/* Telefon, widok modelu: strzalki i zoom na cala szerokosc pod podgladem,
+   opis wzoru w jednej linii ze stopka. Figura i podpis "rozpuszczaja sie"
+   w siatce .layout (display: contents), zeby opis mogl stanac obok stopki. */
+@media (max-width: 560px) {
+  .layout.layout--model { max-width: 30rem; grid-template-columns: minmax(0, 1fr) auto; row-gap: .6rem; }
+  .layout--model header { grid-column: 1 / -1; margin-bottom: .65rem; }
+  .layout--model #model, .layout--model .model-meta { display: contents; }
+  .layout--model #viewport,
+  .layout--model .model-meta #pattern-navigation,
+  .layout--model .model-meta #zoom-tools { grid-column: 1 / -1; grid-row: auto; justify-self: stretch; }
+  .layout--model #pattern-navigation button,
+  .layout--model #zoom-tools button { flex: 1 1 0; width: auto; }
+  .layout--model .model-meta #pattern-caption { grid-column: 1; grid-row: auto; order: 1; align-self: center; }
+  .layout--model .credit { grid-column: 2; order: 2; align-self: center; }
+}
