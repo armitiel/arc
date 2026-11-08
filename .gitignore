@@ -35,3 +35,5 @@
 /Model_3D_mural/web/wzory/*
 !/Model_3D_mural/web/wzory/psd.json
 !/Model_3D_mural/web/wzory/PSD-S-*.png
+!/.github/
+!/Model_3D_mural/web/vendor/
