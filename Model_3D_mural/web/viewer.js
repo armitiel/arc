@@ -333,7 +333,7 @@ async function initViewer() {
   for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) {
     canvas.addEventListener(name, (event) => pointers.delete(event.pointerId));
   }
-  viewport.addEventListener('keydown', (event) => {
+  model.addEventListener('keydown', (event) => {
     const angles = { ArrowLeft: [.09, 0], ArrowRight: [-.09, 0], ArrowUp: [0, .09], ArrowDown: [0, -.09] };
     if (event.target === canvas && event.shiftKey && Object.hasOwn(angles, event.key)) {
       event.preventDefault();
