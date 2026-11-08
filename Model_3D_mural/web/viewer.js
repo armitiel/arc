@@ -19,11 +19,38 @@ const nextPattern = document.querySelector('#next-pattern');
 const patternCaption = document.querySelector('#pattern-caption');
 
 let loading = false;
+let stageAnimation;
+let modeRequest = 0;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-function selectMode(showModel) {
+function enterStage(stage) {
+  if (prefersReducedMotion.matches || !stage.animate) return;
+  stageAnimation = stage.animate(
+    [{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'none' }],
+    { duration: 340, easing: 'ease-out' },
+  );
+}
+
+async function selectMode(showModel) {
+  const request = ++modeRequest;
+  stageAnimation?.cancel();
+  if (showModel === !model.hidden) return;
+
+  const outgoing = showModel ? photo : model;
+  if (!prefersReducedMotion.matches && outgoing.animate) {
+    stageAnimation = outgoing.animate(
+      [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-5px)' }],
+      { duration: 145, easing: 'ease-in', fill: 'forwards' },
+    );
+    await stageAnimation.finished.catch(() => {});
+    if (request !== modeRequest) return;
+  }
+
   layout.classList.toggle('layout--model', showModel);
   photo.hidden = showModel;
   model.hidden = !showModel;
+  stageAnimation?.cancel();
+  enterStage(showModel ? model : photo);
   photoButton.setAttribute('aria-pressed', String(!showModel));
   modelButton.setAttribute('aria-pressed', String(showModel));
 
@@ -39,16 +66,18 @@ function selectMode(showModel) {
 
 photoButton.addEventListener('click', () => selectMode(false));
 modelButton.addEventListener('click', () => selectMode(true));
+enterStage(photo);
 
-function bakedMaterial({ albedo, lightmap, scale, hasLightUV, brass, plaster, wallFace, pattern }) {
+function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster, wallFace, wallTrim, pattern }) {
   return new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms: {
       albedo: { value: albedo },
       lightmap: { value: lightmap },
-      lightScale: { value: scale },
+      lmL: { value: L },
+      lmK: { value: K },
       brass: { value: brass },
-      plaster: { value: plaster },
+      cleanPlaster: { value: cleanPlaster },
       wallPattern: pattern.texture,
       incomingPattern: pattern.incoming,
       slideOffset: pattern.offset,
@@ -57,10 +86,15 @@ function bakedMaterial({ albedo, lightmap, scale, hasLightUV, brass, plaster, wa
     defines: {
       ...(hasLightUV ? { LIGHT_UV_SECONDARY: 1, USE_UV1: 1 } : {}),
       ...(wallFace ? { SMOOTH_VAULT_EDGE: 1 } : {}),
+      ...(wallTrim ? { WALL_TRIM: 1 } : {}),
     },
     vertexShader: `
       varying vec2 bakedUV;
       varying vec2 paintUV;
+      #ifdef WALL_TRIM
+        varying vec3 worldPos;
+        varying vec3 worldNormal;
+      #endif
       void main() {
         #ifdef LIGHT_UV_SECONDARY
           bakedUV = uv1;
@@ -68,25 +102,49 @@ function bakedMaterial({ albedo, lightmap, scale, hasLightUV, brass, plaster, wa
           bakedUV = uv;
         #endif
         paintUV = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vec4 local = vec4(position, 1.0);
+        #ifdef WALL_TRIM
+          worldPos = (modelMatrix * local).xyz;
+          worldNormal = normalize(mat3(modelMatrix) * normal);
+        #endif
+        gl_Position = projectionMatrix * modelViewMatrix * local;
       }
     `,
     fragmentShader: `
       uniform sampler2D albedo;
       uniform sampler2D lightmap;
-      uniform float lightScale;
+      uniform float lmL;
+      uniform float lmK;
       uniform bool brass;
-      uniform bool plaster;
+      uniform bool cleanPlaster;
       uniform sampler2D wallPattern;
       uniform sampler2D incomingPattern;
       uniform float slideOffset;
       uniform bool hasWallPattern;
       varying vec2 bakedUV;
       varying vec2 paintUV;
+      #ifdef WALL_TRIM
+        varying vec3 worldPos;
+        varying vec3 worldNormal;
+      #endif
+      vec3 decodeLight(vec2 uv) {
+        return lmK * (exp2(texture2D(lightmap, uv).rgb * lmL) - 1.0);
+      }
       void main() {
-        // Match the power curve used by the Blender texture export.
+        // Match the power curve used by the Blender albedo export.
         vec3 pigment = pow(texture2D(albedo, bakedUV).rgb, vec3(2.2));
-        vec3 lighting = pow(texture2D(lightmap, bakedUV, 1.7).rgb, vec3(2.2)) * lightScale;
+        // N and S are shipped with painted albedo. Start from bare plaster
+        // above the baseboard so the browser can choose the wall S pattern.
+        bool aboveBaseboard = paintUV.y < 1.0 - 0.08 / 4.2;
+        if (cleanPlaster && aboveBaseboard) pigment = vec3(0.86, 0.855, 0.83);
+        vec3 lighting = decodeLight(bakedUV);
+        #ifdef WALL_TRIM
+          float wallNormalY = normalize(worldNormal).y;
+          bool atWallJoin = abs(abs(worldPos.x) - 2.8) < 0.02 ||
+                            abs(abs(worldPos.z) - 2.8) < 0.02;
+          if (atWallJoin && abs(wallNormalY) < 0.5) discard;
+          if (wallNormalY > 0.35) lighting = vec3(0.17);
+        #endif
         #ifdef SMOOTH_VAULT_EDGE
           // The wall bake catches a bright fringe along the vault join. Sample
           // lighting farther inside the same wall UV island and blend at the arch.
@@ -98,15 +156,20 @@ function bakedMaterial({ albedo, lightmap, scale, hasLightUV, brass, plaster, wa
           vec2 bakeDx = dFdx(bakedUV);
           vec2 bakeDy = dFdy(bakedUV);
           float determinant = paintDx.x * paintDy.y - paintDx.y * paintDy.x;
-          if (fromArch < 0.075 && abs(determinant) > 1e-9) {
+          float fromCorner = min(paintUV.x, 1.0 - paintUV.x);
+          if ((fromArch < 0.075 || fromCorner < 0.025) && abs(determinant) > 1e-9) {
             vec2 bakeDown = (bakeDy * paintDx.x - bakeDx * paintDy.x) / determinant;
-            vec2 innerUV = bakedUV + bakeDown * (0.075 - fromArch);
-            vec3 innerLight = pow(texture2D(lightmap, innerUV, 1.7).rgb, vec3(2.2)) * lightScale;
-            float fringe = 1.0 - smoothstep(0.012, 0.075, fromArch);
-            lighting = mix(lighting, min(lighting, innerLight), fringe);
+            vec2 bakeAcross = (bakeDx * paintDy.y - bakeDy * paintDx.y) / determinant;
+            float inward = paintUV.x < 0.5 ? 1.0 : -1.0;
+            vec2 innerUV = bakedUV + bakeDown * max(0.0, 0.075 - fromArch)
+                         + bakeAcross * (inward * max(0.0, 0.025 - fromCorner));
+            vec3 innerLight = decodeLight(innerUV);
+            float archFringe = 1.0 - smoothstep(0.012, 0.075, fromArch);
+            float cornerFringe = 1.0 - smoothstep(0.003, 0.025, fromCorner);
+            lighting = mix(lighting, min(lighting, innerLight), max(archFringe, cornerFringe));
           }
         #endif
-        if (hasWallPattern) {
+        if (hasWallPattern && aboveBaseboard) {
           vec4 currentPaint = texture2D(wallPattern, paintUV);
           vec3 current = mix(pigment, pow(currentPaint.rgb, vec3(2.2)), currentPaint.a);
           if (slideOffset != 0.0) {
@@ -121,14 +184,9 @@ function bakedMaterial({ albedo, lightmap, scale, hasLightUV, brass, plaster, wa
         }
         // Metallic highlights are absent from the diffuse bake.
         if (brass) pigment = vec3(0.29, 0.20, 0.105);
-        // Suppress bright bake artifacts where the vault meets the walls.
-        float peak = max(lighting.r, max(lighting.g, lighting.b));
-        if (plaster && peak > 0.32) {
-          float excess = peak - 0.32;
-          lighting *= (0.32 + excess / (1.0 + 4.0 * excess)) / peak;
-        }
-        vec3 previewLight = vec3(0.12, 0.105, 0.088) + min(lighting, vec3(3.0));
-        gl_FragColor = vec4(pigment * previewLight, 1.0);
+        vec3 litColor = pigment * lighting;
+        if (brass) litColor += vec3(0.30, 0.22, 0.11);
+        gl_FragColor = vec4(litColor, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -143,10 +201,11 @@ async function initViewer() {
   ]);
   if (!response.ok) throw new Error('Nie można odczytać manifestu modelu.');
   const manifest = await response.json();
-  const catalog = patternResponse.ok ? await patternResponse.json() : {};
+  if (!patternResponse.ok) throw new Error('Nie można odczytać listy wzorów.');
+  const catalog = await patternResponse.json();
   const patterns = catalog.S ?? [];
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#b5aa9d');
+  scene.background = new THREE.Color('#5e584f');
 
   const roomCamera = new THREE.PerspectiveCamera(73, .75, .035, 30);
   const front = manifest.cameras.find((pose) => pose.name === 'Mural_front');
@@ -154,7 +213,7 @@ async function initViewer() {
   roomCamera.lookAt(new THREE.Vector3().fromArray(front.target));
 
   const loader = new THREE.TextureLoader();
-  const [{ scene: room }, baked] = await Promise.all([
+  const [{ scene: room }, baked, initialTexture] = await Promise.all([
     new GLTFLoader().loadAsync('./wnetrze.glb'),
     Promise.all(Object.entries(manifest.objects).map(async ([name, entry]) => {
       const [albedo, lightmap] = await Promise.all([
@@ -163,28 +222,48 @@ async function initViewer() {
       ]);
       albedo.flipY = false;
       lightmap.flipY = false;
-      return [name, { albedo, lightmap, scale: entry.S }];
+      lightmap.generateMipmaps = false;
+      lightmap.minFilter = THREE.LinearFilter;
+      return [name, { albedo, lightmap, L: entry.L, K: entry.K }];
     })),
+    patterns.length ? loader.loadAsync(patterns[0].url) : null,
   ]);
   const emptyPattern = { texture: { value: null }, incoming: { value: null },
     offset: { value: 0 }, enabled: { value: false } };
   const wallPattern = {
-    texture: { value: null },
+    texture: { value: initialTexture },
     incoming: { value: null },
     offset: { value: 0 },
-    enabled: { value: false },
+    enabled: { value: Boolean(initialTexture) },
   };
+  const basicMaterials = new Map([
+    ['Zarowka', new THREE.MeshBasicMaterial({ color: 0xfff1d6, toneMapped: false })],
+    ['Szyba', new THREE.MeshBasicMaterial({
+      color: 0xe8eef3, toneMapped: false, transparent: true, opacity: 0.92,
+      depthWrite: false, side: THREE.DoubleSide,
+    })],
+    ['Lustro', new THREE.MeshBasicMaterial({ color: 0x8a9096, toneMapped: false, side: THREE.DoubleSide })],
+    ['Znak_wyjscie', new THREE.MeshBasicMaterial({ color: 0x3fd776, toneMapped: false })],
+  ]);
   for (const [name, textures] of baked) {
     room.getObjectByName(name).traverse((node) => {
-      if (!node.isMesh || node.material.name === 'Zarowka') return;
+      if (!node.isMesh) return;
+      const basic = basicMaterials.get(node.material.name);
+      if (basic) {
+        node.material = basic;
+        return;
+      }
+      const isWall = name.startsWith('Sciana_');
+      const wallFace = isWall && node.material.name === name + '_mural';
       const materials = {
         ...textures,
-        wallFace: name.startsWith('Sciana_') && node.material.name === name + '_mural',
+        wallFace,
+        wallTrim: isWall && !wallFace,
         pattern: name === 'Sciana_S' && node.material.name === 'Sciana_S_mural'
           ? wallPattern : emptyPattern,
         hasLightUV: node.geometry.hasAttribute('uv1'),
         brass: node.material.name === 'Metal_zyrandol',
-        plaster: name === 'Sklepienie' || name.startsWith('Sciana_') && /tynk|mural/i.test(node.material.name),
+        cleanPlaster: ['Sciana_N_mural', 'Sciana_S_mural'].includes(node.material.name),
       };
       node.material = bakedMaterial(materials);
     });
@@ -199,7 +278,11 @@ async function initViewer() {
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', 'Model ściany S. Przeciągnij lub użyj Shift ze strzałkami, żeby obrócić widok. Strzałki lewo i prawo zmieniają wzór.');
-  viewport.prepend(canvas);
+  function configurePatternTexture(texture) {
+    texture.flipY = false;
+    texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+  }
+  if (initialTexture) configurePatternTexture(initialTexture);
 
   function render() {
     renderer.render(scene, roomCamera);
@@ -226,9 +309,13 @@ async function initViewer() {
     if (next !== roomCamera.zoom) setZoom(next);
   }, { passive: false });
 
-  let index = -1;
+  let index = initialTexture ? 0 : -1;
+
+  function updatePatternCaption() {
+    const label = patterns[index].label.replace(/^wzor\b/i, 'Wzór');
+    patternCaption.textContent = label + ' · ' + (index + 1) + '/' + patterns.length + ' · Ściana S';
+  }
   let busy = false;
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function animatePattern(direction) {
     return new Promise((resolve) => {
@@ -257,10 +344,9 @@ async function initViewer() {
       status.textContent = index < 0 ? 'Wczytuję wzór…' : '';
       const pattern = patterns[target];
       const texture = await loader.loadAsync(pattern.url);
-      texture.flipY = false;
-      texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+      configurePatternTexture(texture);
 
-      if (direction && index >= 0 && !reducedMotion.matches) {
+      if (direction && index >= 0 && !prefersReducedMotion.matches) {
         wallPattern.incoming.value = texture;
         await animatePattern(direction);
       }
@@ -272,8 +358,7 @@ async function initViewer() {
       wallPattern.incoming.value = null;
       previousTexture?.dispose();
       index = target;
-      const label = pattern.label.replace(/^wzor\b/i, 'Wzór');
-      patternCaption.textContent = label + ' · ' + (index + 1) + '/' + patterns.length + ' · Ściana S';
+      updatePatternCaption();
       status.textContent = '';
       render();
     } catch {
@@ -367,10 +452,11 @@ async function initViewer() {
   }).observe(viewport);
 
   resizeCamera();
+  setZoom(1);
+  if (initialTexture) updatePatternCaption();
+  viewport.prepend(canvas);
   poster.hidden = true;
   zoomTools.hidden = false;
-  setZoom(1);
   status.textContent = '';
   patternNavigation.hidden = patterns.length < 2;
-  if (patterns.length) showPattern(0);
 }

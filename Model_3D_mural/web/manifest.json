@@ -3,70 +3,110 @@
   "Sciana_N": {
    "lm": "Sciana_N_lm.jpg",
    "alb": "Sciana_N_alb.jpg",
-   "S": 19.063323974609375
+   "L": 5.930752477595496,
+   "K": 0.02
   },
   "Sciana_E": {
    "lm": "Sciana_E_lm.jpg",
    "alb": "Sciana_E_alb.jpg",
-   "S": 35.13053894042969
+   "L": 5.930752477595496,
+   "K": 0.02
   },
   "Sciana_S": {
    "lm": "Sciana_S_lm.jpg",
    "alb": "Sciana_S_alb.jpg",
-   "S": 26.109134674072266
+   "L": 5.930752477595496,
+   "K": 0.02
   },
   "Sciana_W": {
    "lm": "Sciana_W_lm.jpg",
    "alb": "Sciana_W_alb.jpg",
-   "S": 38.815486907958984
+   "L": 5.930753041467011,
+   "K": 0.02
   },
   "Sklepienie": {
    "lm": "Sklepienie_lm.jpg",
    "alb": "Sklepienie_alb.jpg",
-   "S": 0.3455018997192383
+   "L": 3.769053588195663,
+   "K": 0.02
   },
   "Podloga": {
    "lm": "Podloga_lm.jpg",
    "alb": "Podloga_alb.jpg",
-   "S": 25.652809143066406
+   "L": 5.930751772755791,
+   "K": 0.02
   },
   "Korytarz": {
    "lm": "Korytarz_lm.jpg",
    "alb": "Korytarz_alb.jpg",
-   "S": 34.83763122558594
+   "L": 10.732957945030916,
+   "K": 0.02
   },
   "Meble": {
    "lm": "Meble_lm.jpg",
    "alb": "Meble_alb.jpg",
-   "S": 4.126001834869385
+   "L": 7.636273712521884,
+   "K": 0.02
   }
  },
  "cameras": [
   {
    "name": "Mural_front",
-   "pos": [0.2, 1.65, -2.48],
-   "target": [0.16, 2.02, 2.8],
+   "pos": [
+    0.2,
+    1.65,
+    -2.48
+   ],
+   "target": [
+    0.16,
+    2.02,
+    2.8
+   ],
    "vfov": 51,
    "minHfov": 65
   },
   {
    "name": "Mural_left",
-   "pos": [1.82, 1.65, -2.38],
-   "target": [0.12, 2.02, 2.8],
+   "pos": [
+    1.82,
+    1.65,
+    -2.38
+   ],
+   "target": [
+    0.12,
+    2.02,
+    2.8
+   ],
    "vfov": 54,
    "minHfov": 65
   },
   {
    "name": "Mural_right",
-   "pos": [-1.82, 1.65, -2.38],
-   "target": [0.12, 2.02, 2.8],
+   "pos": [
+    -1.82,
+    1.65,
+    -2.38
+   ],
+   "target": [
+    0.12,
+    2.02,
+    2.8
+   ],
    "vfov": 54,
    "minHfov": 65
   },
   {
    "name": "Kam_srodek",
-   "pos": [0, 1.65, 0],
-   "target": [-1.75, 1.98, 2.8],
+   "pos": [
+    0,
+    1.65,
+    0
+   ],
+   "target": [
+    -1.75,
+    1.98,
+    2.8
+   ],
    "vfov": 68,
    "minHfov": 68
   },
@@ -186,5 +226,6 @@
    "key": "W",
    "label": "Sciana W - grzejnik"
   }
- ]
+ ],
+ "lightmap_encoding": "log: E = K * (2^(tex.rgb * L) - 1); tex czytane liniowo (bez pow 2.2), bez mipmap"
 }

@@ -2,12 +2,12 @@
 :root { font-family: system-ui, sans-serif; color: #f2e9de; background: #252320; color-scheme: dark; }
 body { margin: 0; }
 [hidden] { display: none !important; }
-.layout { max-width: 1260px; min-height: 100svh; margin: auto; padding: clamp(1rem, 4vw, 3.5rem); display: grid; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); gap: clamp(2rem, 7vw, 6rem); align-items: center; }
+.layout { max-width: 1260px; min-height: 100svh; margin: auto; padding: clamp(1rem, 4vw, 3.5rem); display: grid; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); gap: clamp(2rem, 7vw, 6rem); align-items: center; grid-template-rows: 1fr auto; row-gap: 1rem; }
 .layout--model {
   max-width: 1800px;
   padding: clamp(1rem, 2.5vw, 2.5rem);
   grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
-  gap: clamp(1.5rem, 3vw, 3rem);
+  column-gap: clamp(1.5rem, 3vw, 3rem);
 }
 header { min-width: 0; }
 .label { text-transform: uppercase; letter-spacing: .2em; color: #d1bd9f; font-size: .8rem; font-weight: 700; }
@@ -28,26 +28,36 @@ button[aria-pressed="true"] { background: #ead8be; color: #29231d; border-color:
 #zoom-tools button { width: 2.75rem; padding: 0; font-size: 1.35rem; border: 0; }
 #zoom-tools button[aria-disabled="true"] { opacity: .5; cursor: default; }
 #zoom-level { min-width: 3.1rem; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
+#pattern-navigation { position: absolute; inset: 0; pointer-events: none; }
 #pattern-navigation button {
+  pointer-events: auto;
+  --band-direction: to right;
+  --band-shade: #25232066;
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  inset-block: 0;
   display: grid;
   place-items: center;
-  width: clamp(2.75rem, 4vw, 3.25rem);
-  min-height: 0;
-  aspect-ratio: 1;
+  width: clamp(2.75rem, 5vw, 4.5rem);
   padding: 0;
-  border-radius: 50%;
-  background: #f9f5ee;
-  color: #3d3027;
-  box-shadow: 0 .15rem .6rem #30282130;
+  border: 0;
+  border-radius: .2rem 0 0 .2rem;
+  background: linear-gradient(var(--band-direction), var(--band-shade), #25232029 58%, transparent);
+  color: #fff8ec;
 }
-#previous-pattern { left: .75rem; }
-#next-pattern { right: .75rem; }
-#pattern-navigation button:hover { background: #eee2d2; }
-#pattern-navigation button[aria-disabled="true"] { opacity: .65; cursor: wait; }
-#pattern-navigation svg { width: 1.35rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#pattern-navigation #previous-pattern { left: 0; }
+#pattern-navigation #next-pattern { --band-direction: to left; right: 0; border-radius: 0 .2rem .2rem 0; }
+#pattern-navigation button:hover, #pattern-navigation button:focus-visible { --band-shade: #25232082; }
+#pattern-navigation button[aria-disabled="true"] { opacity: .55; cursor: wait; }
+#pattern-navigation button:focus-visible { outline-offset: -3px; }
+#pattern-navigation svg {
+  width: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 3px #252320);
+}
 button:focus-visible, canvas:focus-visible { outline: 2px solid #e5a65f; outline-offset: 2px; }
 .stage { margin: 0 auto; width: min(100%, 57svh); }
 .stage img, #viewport canvas { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: .2rem; }
@@ -63,6 +73,25 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 #viewport canvas { touch-action: none; cursor: grab; }
 #viewport canvas:active { cursor: grabbing; }
 #status:not(:empty) { position: absolute; inset: auto .75rem .75rem; margin: 0; background: #302821; color: #fffaf3; padding: .75rem; border-radius: .2rem; }
+.credit {
+  grid-column: 1 / -1;
+  justify-self: end;
+  color: #cbbfb0;
+  font-size: .75rem;
+  letter-spacing: .035em;
+}
+@keyframes reveal-detail {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .label, h1, .tabs, .credit, #zoom-tools:not([hidden]), #pattern-navigation:not([hidden]) {
+    animation: reveal-detail 360ms ease-out both;
+  }
+  h1 { animation-delay: 50ms; }
+  .tabs, .credit { animation-delay: 100ms; }
+  #zoom-tools:not([hidden]) { animation-delay: 60ms; }
+}
 @media (max-width: 840px) {
   .layout, .layout--model {
     grid-template-columns: minmax(0, 1fr);
@@ -78,4 +107,5 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 }
 @media (forced-colors: active) {
   button[aria-pressed="true"] { border: 2px solid Highlight; }
+  #pattern-navigation button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
 }
