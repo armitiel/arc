@@ -24,6 +24,10 @@
   <figure class="stage" id="model" hidden>
     <div id="viewport" aria-label="Interaktywny model wnętrza">
       <img id="poster" src="./wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Wzór 1 na ścianie z przejściem">
+      <p id="status" role="status"></p>
+    </div>
+    <figcaption class="model-meta">
+      <span id="pattern-caption" aria-live="polite">Ściana S — przejście</span>
       <div id="pattern-navigation" role="group" aria-label="Przewijanie wzorów" hidden>
         <button type="button" id="previous-pattern" aria-label="Poprzedni wzór" aria-controls="pattern-caption">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
@@ -32,10 +36,6 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
         </button>
       </div>
-      <p id="status" role="status"></p>
-    </div>
-    <figcaption class="model-meta">
-      <span id="pattern-caption" aria-live="polite">Ściana S — przejście</span>
       <div id="zoom-tools" role="group" aria-label="Powiększenie modelu" hidden>
         <button type="button" id="zoom-out" aria-label="Oddal">−</button>
         <span id="zoom-level">100%</span>
