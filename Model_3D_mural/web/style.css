@@ -150,7 +150,7 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 
 /* Desktop: szersze strzalki < > do zmiany wzoru */
 @media (min-width: 841px) {
-  .pager button { width: 9rem; min-height: 3rem; }
+  .pager button { width: 12rem; min-height: 3rem; }
   .pager svg { width: 1.45rem; }
 }
 
@@ -192,3 +192,8 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
   #loader, #loader .loader-fill { transition: none; }
   #loader .loader-fill::after { animation: none; display: none; }
 }
+
+/* Kontrolki (wzory, zoom): delikatny obrys zamiast mocnej ramki */
+.pager, #zoom-tools { border-color: #ffffff14; background: #2e2a25; }
+.pager button + button { border-inline-start-color: #ffffff10; }
+.pager button:hover, #zoom-tools button:hover { background: #ffffff0f; }
