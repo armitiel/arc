@@ -153,3 +153,42 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
   .pager button { width: 9rem; min-height: 3rem; }
   .pager svg { width: 1.45rem; }
 }
+
+/* Pasek wczytywania modelu na ciemnym tle strony */
+#loader {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: .9rem;
+  background: #252320;
+  color: #f2e9de;
+  transition: opacity .6s ease;
+}
+#loader.is-done { opacity: 0; pointer-events: none; }
+#loader .loader-label { margin: 0; font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: #d1bd9f; }
+#loader .loader-track { position: relative; width: min(20rem, 60vw); height: 2px; background: #3d3832; border-radius: 2px; overflow: hidden; }
+#loader .loader-fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #8f7a5e, #ead8be);
+  transition: transform .35s ease-out;
+}
+#loader .loader-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #fff8ec99, transparent);
+  transform: translateX(-100%);
+  animation: loader-shine 1.4s ease-in-out infinite;
+}
+#loader .loader-value { margin: 0; font-size: .78rem; font-variant-numeric: tabular-nums; color: #a99c8c; }
+@keyframes loader-shine { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  #loader, #loader .loader-fill { transition: none; }
+  #loader .loader-fill::after { animation: none; display: none; }
+}

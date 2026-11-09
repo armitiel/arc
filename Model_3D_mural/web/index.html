@@ -15,7 +15,12 @@
   </header>
   <figure class="stage" id="model">
     <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">
-      <p id="status" role="status">Wczytuję model 3D…</p>
+      <div id="loader" role="progressbar" aria-label="Wczytywanie modelu 3D" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <p class="loader-label">Wczytuję model 3D</p>
+        <div class="loader-track"><div class="loader-fill"></div></div>
+        <p class="loader-value">0%</p>
+      </div>
+      <p id="status" role="status"></p>
     </div>
     <figcaption class="model-meta">
       <span class="meta-caption" id="pattern-caption" aria-live="polite">Wzór 1</span>

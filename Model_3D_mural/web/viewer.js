@@ -229,7 +229,9 @@ async function initViewer() {
   }
 
   const [{ scene: room }, baked, initialTextures] = await Promise.all([
-    new GLTFLoader().loadAsync('./wnetrze.glb'),
+    new GLTFLoader().loadAsync('./wnetrze.glb', (event) => {
+      if (event.total) setLoaderProgress(0.05 + 0.5 * event.loaded / event.total);
+    }),
     Promise.all(Object.entries(manifest.objects).map(async ([name, entry]) => {
       const [albedo, lightmap] = await Promise.all([
         loader.loadAsync('./' + entry.alb),
@@ -515,6 +517,7 @@ async function initViewer() {
   zoomTools.hidden = false;
   status.textContent = '';
   patternNavigation.hidden = patterns.length < 2;
+  hideLoader();
   stopIntroLook = introLook();
 
   // Po wejsciu kamera sama sie chwile rozglada, zeby bylo widac, ze widokiem mozna ruszac.
@@ -565,7 +568,33 @@ async function initViewer() {
 }
 
 // Strona otwiera sie od razu na modelu 3D.
+// ---------------------------------------------------------------- pasek wczytywania
+const loaderBox = document.querySelector('#loader');
+const loaderFill = loaderBox?.querySelector('.loader-fill');
+const loaderValue = loaderBox?.querySelector('.loader-value');
+let loaderProgress = 0;
+function setLoaderProgress(value) {
+  if (!loaderBox) return;
+  loaderProgress = Math.max(loaderProgress, Math.min(1, value));   // pasek nigdy sie nie cofa
+  const percent = Math.round(loaderProgress * 100);
+  loaderFill.style.transform = 'scaleX(' + loaderProgress + ')';
+  loaderValue.textContent = percent + '%';
+  loaderBox.setAttribute('aria-valuenow', String(percent));
+}
+function hideLoader() {
+  if (!loaderBox) return;
+  setLoaderProgress(1);
+  setTimeout(() => {
+    loaderBox.classList.add('is-done');
+    setTimeout(() => loaderBox.remove(), 700);
+  }, 250);
+}
+// model, lightmapy i wzory ida przez domyslny LoadingManager three.js
+THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => setLoaderProgress(0.05 + 0.9 * loaded / total);
+setLoaderProgress(0.03);
+
 initViewer().catch((error) => {
+  loaderBox?.remove();
   console.error(error);
   status.textContent = 'Nie udało się wczytać modelu 3D. Odśwież stronę.';
 });
