@@ -11,6 +11,7 @@
     "walls": {
       "E": "./wzory/ES-splot-E.webp?v=2",
       "S": "./wzory/ES-splot-S.webp?v=2"
-    }
+    },
+    "hidden": true
   }
 ]

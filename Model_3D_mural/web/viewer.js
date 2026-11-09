@@ -188,7 +188,8 @@ async function initViewer() {
     ...(catalog.S ?? [])
       .filter(({ id }) => id !== 'PSD-S-2')
       .map(({ label, url }) => ({ label, walls: { S: url } })),
-    ...await pairsResponse.json(),
+    // wzor z "hidden": true w pary.json jest schowany (plik zostaje)
+    ...(await pairsResponse.json()).filter((pattern) => !pattern.hidden),
   ];
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#5e584f');
