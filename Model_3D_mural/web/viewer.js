@@ -141,6 +141,8 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
       incomingPattern: pattern.incoming,
       slideOffset: pattern.offset,
       hasWallPattern: pattern.enabled,
+      twoWallSlide: pattern.twoWallSlide,
+      wallIndex: { value: pattern.wallIndex },
     },
     defines: {
       ...(hasLightUV ? { LIGHT_UV_SECONDARY: 1, USE_UV1: 1 } : {}),
@@ -180,6 +182,8 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
       uniform sampler2D incomingPattern;
       uniform float slideOffset;
       uniform bool hasWallPattern;
+      uniform bool twoWallSlide;
+      uniform float wallIndex;
       varying vec2 bakedUV;
       varying vec2 paintUV;
       #ifdef WALL_TRIM
@@ -236,7 +240,8 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
             vec4 incomingPaint = texture2D(incomingPattern, paintUV);
             vec3 incoming = mix(pigment, pow(incomingPaint.rgb, vec3(2.2)), incomingPaint.a);
             float edge = slideOffset > 0.0 ? 1.0 - slideOffset : -slideOffset;
-            float reveal = smoothstep(edge - 0.035, edge + 0.035, paintUV.x);
+            float slideX = twoWallSlide ? (wallIndex + paintUV.x) * 0.5 : paintUV.x;
+            float reveal = smoothstep(edge - 0.035, edge + 0.035, slideX);
             current = mix(current, incoming, slideOffset > 0.0 ? reveal : 1.0 - reveal);
           }
           pigment = current;
@@ -281,25 +286,60 @@ function roomEnvironment(renderer) {
 }
 
 async function initViewer() {
-  const [response, patternResponse] = await Promise.all([
+  const [response, patternResponse, pairsResponse] = await Promise.all([
     fetch('./manifest.json'),
     fetch('./wzory/psd.json', { cache: 'no-cache' }),
+    fetch('./wzory/pary.json', { cache: 'no-cache' }),
   ]);
   if (!response.ok) throw new Error('Nie można odczytać manifestu modelu.');
   const manifest = await response.json();
   if (!patternResponse.ok) throw new Error('Nie można odczytać listy wzorów.');
   const catalog = await patternResponse.json();
-  const patterns = catalog.S ?? [];
+  if (!pairsResponse.ok) throw new Error('Nie można odczytać wzorów narożnych.');
+  const patterns = [
+    ...(catalog.S ?? [])
+      .filter(({ id }) => id !== 'PSD-S-2')
+      .map(({ label, url }) => ({ label, walls: { S: url } })),
+    ...await pairsResponse.json(),
+  ];
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#5e584f');
 
   const roomCamera = new THREE.PerspectiveCamera(73, .75, .035, 30);
   const front = manifest.cameras.find((pose) => pose.name === 'Mural_front');
+  const corner = {
+    pos: [-2.13, 1.74, -2.36],
+    target: [1.65, 1.98, 2.26],
+    vfov: 56,
+    minHfov: 84,
+  };
+  let activePose = front;
   roomCamera.position.fromArray(front.pos);
   roomCamera.lookAt(new THREE.Vector3().fromArray(front.target));
 
   const loader = new THREE.TextureLoader();
-  const [{ scene: room }, baked, initialTexture] = await Promise.all([
+  const muralWalls = ['E', 'S'];
+  const blank = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  blank.needsUpdate = true;
+
+  async function loadPatternTextures(pattern) {
+    const loaded = await Promise.allSettled(muralWalls.map(async (wall) => {
+      const url = pattern?.walls[wall];
+      return [wall, url ? await loader.loadAsync(url) : blank];
+    }));
+    const textures = Object.fromEntries(loaded.filter(({ status }) => status === 'fulfilled')
+      .map(({ value }) => value));
+    const failed = loaded.find(({ status }) => status === 'rejected');
+    if (failed) {
+      for (const texture of Object.values(textures)) {
+        if (texture !== blank) texture.dispose();
+      }
+      throw failed.reason;
+    }
+    return textures;
+  }
+
+  const [{ scene: room }, baked, initialTextures] = await Promise.all([
     new GLTFLoader().loadAsync('./wnetrze.glb'),
     Promise.all(Object.entries(manifest.objects).map(async ([name, entry]) => {
       const [albedo, lightmap] = await Promise.all([
@@ -312,16 +352,19 @@ async function initViewer() {
       lightmap.minFilter = THREE.LinearFilter;
       return [name, { albedo, lightmap, L: entry.L, K: entry.K }];
     })),
-    patterns.length ? loader.loadAsync(patterns[0].url) : null,
+    loadPatternTextures(patterns[0]),
   ]);
-  const emptyPattern = { texture: { value: null }, incoming: { value: null },
-    offset: { value: 0 }, enabled: { value: false } };
-  const wallPattern = {
-    texture: { value: initialTexture },
-    incoming: { value: null },
-    offset: { value: 0 },
-    enabled: { value: Boolean(initialTexture) },
+  const offset = { value: 0 };
+  const twoWallSlide = { value: false };
+  const emptyPattern = {
+    texture: { value: blank }, incoming: { value: blank },
+    offset, twoWallSlide, wallIndex: 0, enabled: { value: false },
   };
+  const wallPatterns = Object.fromEntries(muralWalls.map((wall, wallIndex) => [wall, {
+    texture: { value: initialTextures[wall] },
+    incoming: { value: blank },
+    offset, twoWallSlide, wallIndex, enabled: { value: true },
+  }]));
   const basicMaterials = new Map([
     ['Zarowka', new THREE.MeshBasicMaterial({ color: 0xfff1d6, toneMapped: false })],
     ['Szyba', new THREE.MeshBasicMaterial({
@@ -349,8 +392,7 @@ async function initViewer() {
         ...textures,
         wallFace,
         wallTrim: isWall && !wallFace,
-        pattern: name === 'Sciana_S' && node.material.name === 'Sciana_S_mural'
-          ? wallPattern : emptyPattern,
+        pattern: (wallFace && wallPatterns[name.at(-1)]) || emptyPattern,
         hasLightUV: node.geometry.hasAttribute('uv1'),
         brass: node.material.name === 'Metal_zyrandol',
         cleanPlaster: ['Sciana_N_mural', 'Sciana_S_mural'].includes(node.material.name),
@@ -368,12 +410,14 @@ async function initViewer() {
   scene.environment = roomEnvironment(renderer);
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
-  canvas.setAttribute('aria-label', 'Model ściany S. Przeciągnij lub użyj Shift ze strzałkami, żeby obrócić widok. Strzałki lewo i prawo zmieniają wzór.');
+  canvas.setAttribute('aria-label', 'Model wnętrza. Przeciągnij lub użyj Shift ze strzałkami, żeby obrócić widok. Strzałki lewo i prawo zmieniają wzór.');
   function configurePatternTexture(texture) {
     texture.flipY = false;
     texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
   }
-  if (initialTexture) configurePatternTexture(initialTexture);
+  for (const texture of Object.values(initialTextures)) {
+    if (texture !== blank) configurePatternTexture(texture);
+  }
 
   function render() {
     renderer.render(scene, roomCamera);
@@ -400,21 +444,37 @@ async function initViewer() {
     if (next !== roomCamera.zoom) setZoom(next);
   }, { passive: false });
 
-  let index = initialTexture ? 0 : -1;
+  let index = patterns.length ? 0 : -1;
 
   function updatePatternCaption() {
     const label = patterns[index].label.replace(/^wzor\b/i, 'Wzór');
-    patternCaption.textContent = label + ' · ' + (index + 1) + '/' + patterns.length + ' · Ściana S';
+    const walls = patterns[index].walls.E ? 'Ściany E i S' : 'Ściana S';
+    patternCaption.textContent = label + ' · ' + (index + 1) + '/' + patterns.length + ' · ' + walls;
   }
   let busy = false;
+  let stopIntroLook;
 
-  function animatePattern(direction) {
+  function animatePattern(direction, nextPose) {
+    const movesCamera = nextPose !== activePose;
+    const from = roomCamera.clone();
+    const to = roomCamera.clone();
+    to.position.fromArray(nextPose.pos);
+    to.lookAt(new THREE.Vector3().fromArray(nextPose.target));
+
     return new Promise((resolve) => {
       let start;
       function frame(time) {
         start ??= time;
         const progress = Math.min((time - start) / 460, 1);
-        wallPattern.offset.value = direction * progress * progress * (3 - 2 * progress);
+        const eased = progress * progress * (3 - 2 * progress);
+        offset.value = direction * eased;
+        if (movesCamera) {
+          roomCamera.position.lerpVectors(from.position, to.position, eased);
+          roomCamera.quaternion.slerpQuaternions(from.quaternion, to.quaternion, eased);
+          roomCamera.zoom = THREE.MathUtils.lerp(from.zoom, 1, eased);
+          roomCamera.fov = THREE.MathUtils.lerp(from.fov, cameraFov(nextPose), eased);
+          roomCamera.updateProjectionMatrix();
+        }
         if (progress < 1) {
           render();
           requestAnimationFrame(frame);
@@ -434,20 +494,36 @@ async function initViewer() {
     try {
       status.textContent = index < 0 ? 'Wczytuję wzór…' : '';
       const pattern = patterns[target];
-      const texture = await loader.loadAsync(pattern.url);
-      configurePatternTexture(texture);
-
-      if (direction && index >= 0 && !prefersReducedMotion.matches) {
-        wallPattern.incoming.value = texture;
-        await animatePattern(direction);
+      const textures = await loadPatternTextures(pattern);
+      stopIntroLook?.();
+      for (const wall of muralWalls) {
+        const texture = textures[wall];
+        if (texture !== blank) configurePatternTexture(texture);
+        wallPatterns[wall].incoming.value = texture;
       }
 
-      const previousTexture = wallPattern.texture.value;
-      wallPattern.texture.value = texture;
-      wallPattern.enabled.value = true;
-      wallPattern.offset.value = 0;
-      wallPattern.incoming.value = null;
-      previousTexture?.dispose();
+      const nextPose = pattern.walls.E ? corner : front;
+      if (direction && index >= 0 && !prefersReducedMotion.matches) {
+        twoWallSlide.value = activePose === corner || nextPose === corner;
+        await animatePattern(direction, nextPose);
+      }
+
+      for (const wall of muralWalls) {
+        const state = wallPatterns[wall];
+        const previousTexture = state.texture.value;
+        state.texture.value = textures[wall];
+        state.incoming.value = blank;
+        if (previousTexture !== blank) previousTexture.dispose();
+      }
+      offset.value = 0;
+      if (nextPose !== activePose) {
+        activePose = nextPose;
+        roomCamera.position.fromArray(activePose.pos);
+        roomCamera.lookAt(new THREE.Vector3().fromArray(activePose.target));
+        rotation.setFromQuaternion(roomCamera.quaternion, 'YXZ');
+        roomCamera.fov = cameraFov(activePose);
+        setZoom(1);
+      }
       index = target;
       updatePatternCaption();
       status.textContent = '';
@@ -523,16 +599,19 @@ async function initViewer() {
     }
   });
 
+  function cameraFov({ vfov, minHfov }) {
+    const portraitFov = THREE.MathUtils.radToDeg(
+      2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(minHfov / 2)) / roomCamera.aspect),
+    );
+    return Math.min(90, Math.max(vfov, portraitFov));
+  }
+
   function resizeCamera() {
     const { clientWidth, clientHeight } = viewport;
     if (clientWidth === 0 || clientHeight === 0) return;
     renderer.setSize(clientWidth, clientHeight, false);
     roomCamera.aspect = clientWidth / clientHeight;
-    const { vfov, minHfov } = front;
-    const portraitFov = minHfov
-      ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(minHfov / 2)) / roomCamera.aspect))
-      : vfov;
-    roomCamera.fov = Math.min(90, Math.max(vfov, portraitFov));
+    roomCamera.fov = cameraFov(activePose);
     roomCamera.updateProjectionMatrix();
   }
 
@@ -544,13 +623,13 @@ async function initViewer() {
 
   resizeCamera();
   setZoom(1);
-  if (initialTexture) updatePatternCaption();
+  if (index >= 0) updatePatternCaption();
   viewport.prepend(canvas);
   poster.hidden = true;
   zoomTools.hidden = false;
   status.textContent = '';
   patternNavigation.hidden = patterns.length < 2;
-  introLook();
+  stopIntroLook = introLook();
 
   // Po wejsciu kamera sama sie chwile rozglada, zeby bylo widac, ze widokiem mozna ruszac.
   function introLook() {
@@ -575,7 +654,7 @@ async function initViewer() {
     }
     if (prefersReducedMotion.matches) {
       hideTimer = setTimeout(hide, 5000);
-      return;
+      return stop;
     }
     const baseYaw = rotation.y;
     const basePitch = rotation.x;
@@ -595,5 +674,6 @@ async function initViewer() {
       else hideTimer = setTimeout(hide, 1600);
     }
     setTimeout(() => !cancelled && requestAnimationFrame(frame), 700);
+    return stop;
   }
 }

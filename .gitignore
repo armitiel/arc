@@ -35,6 +35,8 @@
 /Model_3D_mural/web/wzory/*
 !/Model_3D_mural/web/wzory/psd.json
 !/Model_3D_mural/web/wzory/PSD-S-*.webp
+!/Model_3D_mural/web/wzory/pary.json
+!/Model_3D_mural/web/wzory/ES-*.webp
 !/.github/
 !/Model_3D_mural/web/vendor/
 !/Model_3D_mural/web/vendor-three.mjs

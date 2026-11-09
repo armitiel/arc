@@ -1,0 +1,16 @@
+[
+  {
+    "label": "Woluty",
+    "walls": {
+      "E": "./wzory/ES-woluty-E.webp?v=2",
+      "S": "./wzory/ES-woluty-S.webp?v=2"
+    }
+  },
+  {
+    "label": "Splot",
+    "walls": {
+      "E": "./wzory/ES-splot-E.webp?v=2",
+      "S": "./wzory/ES-splot-S.webp?v=2"
+    }
+  }
+]
