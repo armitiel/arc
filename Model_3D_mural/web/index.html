@@ -12,32 +12,10 @@
   <header>
     <p class="label">ARC</p>
     <h1>Mural</h1>
-    <div class="tabs" role="group" aria-label="Rodzaj podglądu">
-      <button id="show-photo" aria-pressed="true">Wizualizacja</button>
-      <button id="show-model" aria-pressed="false">Model 3D</button>
-    </div>
   </header>
-  <figure class="stage" id="photo">
-    <div class="frame" id="photo-frame">
-      <img class="backdrop" id="photo-backdrop" src="./ujecia/wzor-1-wizualizacja.jpg" alt="" aria-hidden="true">
-      <img id="photo-image" src="./ujecia/wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Wzór 1 · ściana S — przejście">
-    </div>
-    <figcaption class="model-meta">
-      <span class="meta-caption" id="photo-caption" aria-live="polite">Wzór 1 · ściana S — przejście</span>
-      <div class="pager" id="photo-navigation" role="group" aria-label="Ujęcia renderów" hidden>
-        <button type="button" id="previous-shot" aria-label="Poprzednie ujęcie" aria-controls="photo-caption">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
-        </button>
-        <button type="button" id="next-shot" aria-label="Następne ujęcie" aria-controls="photo-caption">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
-        </button>
-      </div>
-    </figcaption>
-  </figure>
-  <figure class="stage" id="model" hidden>
+  <figure class="stage" id="model">
     <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">
-      <img id="poster" src="./wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Wzór 1 na ścianie z przejściem">
-      <p id="status" role="status"></p>
+      <p id="status" role="status">Wczytuję model 3D…</p>
     </div>
     <figcaption class="model-meta">
       <span class="meta-caption" id="pattern-caption" aria-live="polite">Ściana S — przejście</span>

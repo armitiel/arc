@@ -144,8 +144,3 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 }
 
 /* Wizualizacja: ta sama ramka co model 3D; caly render widoczny, boki wypelnia rozmyte tlo */
-#photo .frame { overflow: hidden; background: #1d1b19; }
-#photo .frame .backdrop { position: absolute; inset: 0; object-fit: cover; filter: blur(26px) brightness(.5); transform: scale(1.15); border-radius: 0; }
-#photo .frame #photo-image { position: relative; object-fit: contain; border-radius: 0; transition: opacity .22s ease; }
-#photo .frame #photo-image.is-swapping { opacity: 0; }
-@media (prefers-reduced-motion: reduce) { #photo .frame #photo-image { transition: none; } }

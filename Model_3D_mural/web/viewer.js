@@ -1,13 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const layout = document.querySelector('.layout');
-const photo = document.querySelector('#photo');
 const model = document.querySelector('#model');
-const photoButton = document.querySelector('#show-photo');
-const modelButton = document.querySelector('#show-model');
 const viewport = document.querySelector('#viewport');
-const poster = document.querySelector('#poster');
 const status = document.querySelector('#status');
 const zoomTools = document.querySelector('#zoom-tools');
 const zoomOut = document.querySelector('#zoom-out');
@@ -18,114 +13,7 @@ const previousPattern = document.querySelector('#previous-pattern');
 const nextPattern = document.querySelector('#next-pattern');
 const patternCaption = document.querySelector('#pattern-caption');
 
-let loading = false;
-let stageAnimation;
-let modeRequest = 0;
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-function enterStage(stage) {
-  if (prefersReducedMotion.matches || !stage.animate) return;
-  stageAnimation = stage.animate(
-    [{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'none' }],
-    { duration: 340, easing: 'ease-out' },
-  );
-}
-
-async function selectMode(showModel) {
-  const request = ++modeRequest;
-  stageAnimation?.cancel();
-  if (showModel === !model.hidden) return;
-
-  const outgoing = showModel ? photo : model;
-  if (!prefersReducedMotion.matches && outgoing.animate) {
-    stageAnimation = outgoing.animate(
-      [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-5px)' }],
-      { duration: 145, easing: 'ease-in', fill: 'forwards' },
-    );
-    await stageAnimation.finished.catch(() => {});
-    if (request !== modeRequest) return;
-  }
-
-  photo.hidden = showModel;
-  model.hidden = !showModel;
-  stageAnimation?.cancel();
-  enterStage(showModel ? model : photo);
-  photoButton.setAttribute('aria-pressed', String(!showModel));
-  modelButton.setAttribute('aria-pressed', String(showModel));
-
-  if (showModel && !loading) {
-    loading = true;
-    status.textContent = 'Wczytuję model 3D…';
-    initViewer().catch((error) => {
-      console.error(error);
-      status.textContent = 'Podgląd 3D jest niedostępny. Możesz obejrzeć wizualizację i zapisany kadr sali.';
-    });
-  }
-}
-
-photoButton.addEventListener('click', () => selectMode(false));
-modelButton.addEventListener('click', () => selectMode(true));
-enterStage(photo);
-
-// ---------------------------------------------------------------- Wizualizacja: przelaczanie ujec renderow
-const shotImage = document.querySelector('#photo-image');
-const shotBackdrop = document.querySelector('#photo-backdrop');
-const shotCaption = document.querySelector('#photo-caption');
-const shotNavigation = document.querySelector('#photo-navigation');
-const previousShot = document.querySelector('#previous-shot');
-const nextShot = document.querySelector('#next-shot');
-let shots = [];
-let shotIndex = 0;
-let shotRequest = 0;
-
-async function showShot(target) {
-  if (!shots.length) return;
-  shotIndex = (target + shots.length) % shots.length;
-  const shot = shots[shotIndex];
-  const request = ++shotRequest;
-  const preload = new Image();
-  preload.src = shot.url;
-  const swap = !prefersReducedMotion.matches;
-  if (swap) shotImage.classList.add('is-swapping');
-  await Promise.all([
-    preload.decode().catch(() => {}),
-    swap ? new Promise((resolve) => setTimeout(resolve, 220)) : null,
-  ]);
-  if (request !== shotRequest) return;
-  shotImage.src = shot.url;
-  shotImage.alt = shot.label;
-  shotImage.removeAttribute('width');
-  shotImage.removeAttribute('height');
-  if (shotBackdrop) shotBackdrop.src = shot.url;
-  shotImage.classList.remove('is-swapping');
-  shotCaption.textContent = shot.label + ' · ' + (shotIndex + 1) + '/' + shots.length;
-  // nastepne ujecie wczytujemy z wyprzedzeniem
-  new Image().src = shots[(shotIndex + 1) % shots.length].url;
-}
-
-async function initShots() {
-  try {
-    const response = await fetch('./ujecia/ujecia.json', { cache: 'no-cache' });
-    if (!response.ok) return;
-    shots = await response.json();
-  } catch {
-    return;
-  }
-  if (!shots.length) return;
-  shotNavigation.hidden = shots.length < 2;
-  showShot(0);
-}
-
-previousShot.addEventListener('click', () => showShot(shotIndex - 1));
-nextShot.addEventListener('click', () => showShot(shotIndex + 1));
-document.addEventListener('keydown', (event) => {
-  if (photo.hidden || event.target.closest?.('input, select, textarea')) return;
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-    event.preventDefault();
-    showShot(shotIndex + (event.key === 'ArrowLeft' ? -1 : 1));
-  }
-});
-initShots();
 
 function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster, wallFace, wallTrim, pattern }) {
   return new THREE.ShaderMaterial({
@@ -625,7 +513,6 @@ async function initViewer() {
   setZoom(1);
   if (index >= 0) updatePatternCaption();
   viewport.prepend(canvas);
-  poster.hidden = true;
   zoomTools.hidden = false;
   status.textContent = '';
   patternNavigation.hidden = patterns.length < 2;
@@ -677,3 +564,9 @@ async function initViewer() {
     return stop;
   }
 }
+
+// Strona otwiera sie od razu na modelu 3D.
+initViewer().catch((error) => {
+  console.error(error);
+  status.textContent = 'Nie udało się wczytać modelu 3D. Odśwież stronę.';
+});
