@@ -336,9 +336,7 @@ async function initViewer() {
   let index = patterns.length ? 0 : -1;
 
   function updatePatternCaption() {
-    const label = patterns[index].label.replace(/^wzor\b/i, 'Wzór');
-    const walls = patterns[index].walls.E ? 'Ściany E i S' : 'Ściana S';
-    patternCaption.textContent = label + ' · ' + (index + 1) + '/' + patterns.length + ' · ' + walls;
+    patternCaption.textContent = 'Wzór ' + (index + 1);
   }
   let busy = false;
   let stopIntroLook;
