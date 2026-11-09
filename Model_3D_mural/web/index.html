@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RAC — Murale</title>
+<title>ARC — Murale</title>
 <link rel="stylesheet" href="./style.css">
 <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.min.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
-<main class="layout">
+<main class="layout layout--model">
   <header>
-    <p class="label">RAC</p>
+    <p class="label">ARC</p>
     <h1>Mural</h1>
     <div class="tabs" role="group" aria-label="Rodzaj podglądu">
       <button id="show-photo" aria-pressed="true">Wizualizacja</button>
@@ -18,17 +18,30 @@
     </div>
   </header>
   <figure class="stage" id="photo">
-    <img src="./wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Złoty ornament i łagodne pasma koloru na ścianie z ceglanym przejściem">
-    <figcaption>Wzór 1 · ściana S — przejście</figcaption>
+    <div class="frame" id="photo-frame">
+      <img class="backdrop" id="photo-backdrop" src="./ujecia/wzor-1-wizualizacja.jpg" alt="" aria-hidden="true">
+      <img id="photo-image" src="./ujecia/wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Wzór 1 · ściana S — przejście">
+    </div>
+    <figcaption class="model-meta">
+      <span class="meta-caption" id="photo-caption" aria-live="polite">Wzór 1 · ściana S — przejście</span>
+      <div class="pager" id="photo-navigation" role="group" aria-label="Ujęcia renderów" hidden>
+        <button type="button" id="previous-shot" aria-label="Poprzednie ujęcie" aria-controls="photo-caption">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        </button>
+        <button type="button" id="next-shot" aria-label="Następne ujęcie" aria-controls="photo-caption">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+    </figcaption>
   </figure>
   <figure class="stage" id="model" hidden>
-    <div id="viewport" aria-label="Interaktywny model wnętrza">
+    <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">
       <img id="poster" src="./wzor-1-wizualizacja.jpg" width="900" height="1200" alt="Wzór 1 na ścianie z przejściem">
       <p id="status" role="status"></p>
     </div>
     <figcaption class="model-meta">
-      <span id="pattern-caption" aria-live="polite">Ściana S — przejście</span>
-      <div id="pattern-navigation" role="group" aria-label="Przewijanie wzorów" hidden>
+      <span class="meta-caption" id="pattern-caption" aria-live="polite">Ściana S — przejście</span>
+      <div class="pager" id="pattern-navigation" role="group" aria-label="Przewijanie wzorów" hidden>
         <button type="button" id="previous-pattern" aria-label="Poprzedni wzór" aria-controls="pattern-caption">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
         </button>

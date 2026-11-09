@@ -3,7 +3,7 @@
 body { margin: 0; }
 [hidden] { display: none !important; }
 .layout { max-width: 1260px; min-height: 100svh; margin: auto; padding: clamp(1rem, 4vw, 3.5rem); display: grid; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); gap: clamp(2rem, 7vw, 6rem); align-items: center; grid-template-rows: 1fr auto; row-gap: 1rem; }
-.layout--model {
+.layout {
   max-width: 1800px;
   padding: clamp(1rem, 2.5vw, 2.5rem);
   grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
@@ -28,7 +28,7 @@ button[aria-pressed="true"] { background: #ead8be; color: #29231d; border-color:
 #zoom-tools button { width: 2.75rem; padding: 0; font-size: 1.35rem; border: 0; }
 #zoom-tools button[aria-disabled="true"] { opacity: .5; cursor: default; }
 #zoom-level { min-width: 3.1rem; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
-#pattern-navigation {
+.pager {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -37,26 +37,26 @@ button[aria-pressed="true"] { background: #ead8be; color: #29231d; border-color:
   background: #34302a;
   color: #f2e9de;
 }
-#pattern-navigation button { display: grid; place-items: center; width: 5.5rem; padding: 0; border: 0; border-radius: 0; }
-#pattern-navigation button + button { border-inline-start: 1px solid #85776a; }
-#pattern-navigation button:hover { background: #ffffff12; }
-#pattern-navigation button[aria-disabled="true"] { opacity: .55; cursor: wait; }
-#pattern-navigation svg { width: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.pager button { display: grid; place-items: center; width: 5.5rem; padding: 0; border: 0; border-radius: 0; }
+.pager button + button { border-inline-start: 1px solid #85776a; }
+.pager button:hover { background: #ffffff12; }
+.pager button[aria-disabled="true"] { opacity: .55; cursor: wait; }
+.pager svg { width: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 button:focus-visible, canvas:focus-visible { outline: 2px solid #e5a65f; outline-offset: 2px; }
 .stage { margin: 0 auto; width: min(100%, 57svh); }
-.stage img, #viewport canvas { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: .2rem; }
+.stage img, .frame canvas { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: .2rem; }
 .stage > img { aspect-ratio: 3 / 4; }
-#model { width: 100%; }
-#viewport { height: clamp(22rem, 78svh, 68rem); border-radius: .2rem; }
-#viewport img { object-fit: contain; }
+#model, #photo { width: 100%; }
+.frame { height: clamp(22rem, 78svh, 68rem); border-radius: .2rem; }
+.frame img { object-fit: contain; }
 figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 .model-meta { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .55rem 1rem; }
-.model-meta #pattern-caption { grid-column: 1; grid-row: 1; }
-.model-meta #pattern-navigation { grid-column: 2; grid-row: 1; }
+.model-meta .meta-caption { grid-column: 1; grid-row: 1; }
+.model-meta .pager { grid-column: 2; grid-row: 1; }
 .model-meta #zoom-tools { grid-column: 3; grid-row: 1; justify-self: end; }
-#viewport { position: relative; background: #d2c8bb; }
-#viewport canvas { touch-action: none; cursor: grab; }
-#viewport canvas:active { cursor: grabbing; }
+.frame { position: relative; background: #d2c8bb; }
+.frame canvas { touch-action: none; cursor: grab; }
+.frame canvas:active { cursor: grabbing; }
 #status:not(:empty) { position: absolute; inset: auto .75rem .75rem; margin: 0; background: #302821; color: #fffaf3; padding: .75rem; border-radius: .2rem; }
 .credit {
   grid-column: 1 / -1;
@@ -70,7 +70,7 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
   to { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .label, h1, .tabs, .credit, #zoom-tools:not([hidden]), #pattern-navigation:not([hidden]) {
+  .label, h1, .tabs, .credit, #zoom-tools:not([hidden]), .pager:not([hidden]) {
     animation: reveal-detail 360ms ease-out both;
   }
   h1 { animation-delay: 50ms; }
@@ -78,21 +78,21 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
   #zoom-tools:not([hidden]) { animation-delay: 60ms; }
 }
 @media (max-width: 840px) {
-  .layout, .layout--model {
+  .layout, .layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
     align-items: start;
     gap: 1.25rem;
   }
-  .layout--model h1 { font-size: clamp(2.5rem, 8vw, 4rem); margin: .6rem 0; }
-  .layout--model .tabs { margin-top: 1rem; }
+  .layout h1 { font-size: clamp(2.5rem, 8vw, 4rem); margin: .6rem 0; }
+  .layout .tabs { margin-top: 1rem; }
   .stage { width: min(100%, 27rem); }
-  #viewport { height: clamp(20rem, 55svh, 36rem); }
+  .frame { height: clamp(20rem, 55svh, 36rem); }
   h1 { margin: 1rem 0; }
 }
 @media (forced-colors: active) {
   button[aria-pressed="true"] { border: 2px solid Highlight; }
-  #pattern-navigation button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .pager button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
 }
 /* Podpowiedz po wejsciu do modelu (znika po pierwszym ruchu) */
 #look-hint {
@@ -124,14 +124,28 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
    opis wzoru w jednej linii ze stopka. Figura i podpis "rozpuszczaja sie"
    w siatce .layout (display: contents), zeby opis mogl stanac obok stopki. */
 @media (max-width: 560px) {
-  .layout.layout--model { max-width: 30rem; grid-template-columns: minmax(0, 1fr) auto; row-gap: .6rem; }
-  .layout--model header { grid-column: 1 / -1; margin-bottom: .65rem; }
-  .layout--model #model, .layout--model .model-meta { display: contents; }
-  .layout--model #viewport,
-  .layout--model .model-meta #pattern-navigation,
-  .layout--model .model-meta #zoom-tools { grid-column: 1 / -1; grid-row: auto; justify-self: stretch; }
-  .layout--model #pattern-navigation button,
-  .layout--model #zoom-tools button { flex: 1 1 0; width: auto; }
-  .layout--model .model-meta #pattern-caption { grid-column: 1; grid-row: auto; order: 1; align-self: center; }
-  .layout--model .credit { grid-column: 2; order: 2; align-self: center; }
+  .layout.layout { max-width: 30rem; grid-template-columns: minmax(0, 1fr) auto; row-gap: .6rem; }
+  .layout header { grid-column: 1 / -1; margin-bottom: .65rem; }
+  .layout #model, .layout #photo, .layout .model-meta { display: contents; }
+  .layout .frame,
+  .layout .model-meta .pager,
+  .layout .model-meta #zoom-tools { grid-column: 1 / -1; grid-row: auto; justify-self: stretch; }
+  .layout .pager button,
+  .layout #zoom-tools button { flex: 1 1 0; width: auto; }
+  .layout .model-meta .meta-caption { grid-column: 1; grid-row: auto; order: 1; align-self: center; }
+  .layout .credit { grid-column: 2; order: 2; align-self: center; }
 }
+
+
+/* Mobile: przyciski Wizualizacja / Model 3D na pelna szerokosc */
+@media (max-width: 560px) {
+  .layout .tabs { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .layout .tabs button { width: 100%; }
+}
+
+/* Wizualizacja: ta sama ramka co model 3D; caly render widoczny, boki wypelnia rozmyte tlo */
+#photo .frame { overflow: hidden; background: #1d1b19; }
+#photo .frame .backdrop { position: absolute; inset: 0; object-fit: cover; filter: blur(26px) brightness(.5); transform: scale(1.15); border-radius: 0; }
+#photo .frame #photo-image { position: relative; object-fit: contain; border-radius: 0; transition: opacity .22s ease; }
+#photo .frame #photo-image.is-swapping { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { #photo .frame #photo-image { transition: none; } }

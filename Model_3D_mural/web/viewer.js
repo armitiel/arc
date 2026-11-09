@@ -46,7 +46,6 @@ async function selectMode(showModel) {
     if (request !== modeRequest) return;
   }
 
-  layout.classList.toggle('layout--model', showModel);
   photo.hidden = showModel;
   model.hidden = !showModel;
   stageAnimation?.cancel();
@@ -67,6 +66,66 @@ async function selectMode(showModel) {
 photoButton.addEventListener('click', () => selectMode(false));
 modelButton.addEventListener('click', () => selectMode(true));
 enterStage(photo);
+
+// ---------------------------------------------------------------- Wizualizacja: przelaczanie ujec renderow
+const shotImage = document.querySelector('#photo-image');
+const shotBackdrop = document.querySelector('#photo-backdrop');
+const shotCaption = document.querySelector('#photo-caption');
+const shotNavigation = document.querySelector('#photo-navigation');
+const previousShot = document.querySelector('#previous-shot');
+const nextShot = document.querySelector('#next-shot');
+let shots = [];
+let shotIndex = 0;
+let shotRequest = 0;
+
+async function showShot(target) {
+  if (!shots.length) return;
+  shotIndex = (target + shots.length) % shots.length;
+  const shot = shots[shotIndex];
+  const request = ++shotRequest;
+  const preload = new Image();
+  preload.src = shot.url;
+  const swap = !prefersReducedMotion.matches;
+  if (swap) shotImage.classList.add('is-swapping');
+  await Promise.all([
+    preload.decode().catch(() => {}),
+    swap ? new Promise((resolve) => setTimeout(resolve, 220)) : null,
+  ]);
+  if (request !== shotRequest) return;
+  shotImage.src = shot.url;
+  shotImage.alt = shot.label;
+  shotImage.removeAttribute('width');
+  shotImage.removeAttribute('height');
+  if (shotBackdrop) shotBackdrop.src = shot.url;
+  shotImage.classList.remove('is-swapping');
+  shotCaption.textContent = shot.label + ' · ' + (shotIndex + 1) + '/' + shots.length;
+  // nastepne ujecie wczytujemy z wyprzedzeniem
+  new Image().src = shots[(shotIndex + 1) % shots.length].url;
+}
+
+async function initShots() {
+  try {
+    const response = await fetch('./ujecia/ujecia.json', { cache: 'no-cache' });
+    if (!response.ok) return;
+    shots = await response.json();
+  } catch {
+    return;
+  }
+  if (!shots.length) return;
+  shotNavigation.hidden = shots.length < 2;
+  showShot(0);
+}
+
+previousShot.addEventListener('click', () => showShot(shotIndex - 1));
+nextShot.addEventListener('click', () => showShot(shotIndex + 1));
+document.addEventListener('keydown', (event) => {
+  if (photo.hidden || event.target.closest?.('input, select, textarea')) return;
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    showShot(shotIndex + (event.key === 'ArrowLeft' ? -1 : 1));
+  }
+});
+initShots();
 
 function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster, wallFace, wallTrim, pattern }) {
   return new THREE.ShaderMaterial({
@@ -194,6 +253,33 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
   });
 }
 
+// Proste otoczenie sali do odbic w metalu: jasne sklepienie, sciany, ciemniejsza podloga,
+// dwa jasne prostokaty = okno i drzwi od polnocy, cieple punkty = swiece.
+function roomEnvironment(renderer) {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const g = c.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, 256);
+  sky.addColorStop(0, '#f6eee2');
+  sky.addColorStop(0.42, '#e6dccd');
+  sky.addColorStop(0.52, '#8c7e6c');
+  sky.addColorStop(0.62, '#4a4036');
+  sky.addColorStop(1, '#2a241e');
+  g.fillStyle = sky; g.fillRect(0, 0, 512, 256);
+  g.fillStyle = '#ffffff';
+  g.fillRect(60, 92, 34, 50);     // okno
+  g.fillRect(150, 88, 30, 78);    // drzwi
+  g.fillStyle = '#ffd9a0';
+  for (let i = 0; i < 6; i++) g.fillRect(40 + i * 80, 40, 8, 8);   // swiece
+  const tex = new THREE.CanvasTexture(c);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromEquirectangular(tex).texture;
+  tex.dispose(); pmrem.dispose();
+  return env;
+}
+
 async function initViewer() {
   const [response, patternResponse] = await Promise.all([
     fetch('./manifest.json'),
@@ -244,6 +330,10 @@ async function initViewer() {
     })],
     ['Lustro', new THREE.MeshBasicMaterial({ color: 0x8a9096, toneMapped: false, side: THREE.DoubleSide })],
     ['Znak_wyjscie', new THREE.MeshBasicMaterial({ color: 0x3fd776, toneMapped: false })],
+    // Mosiadz zyrandola: wypalone swiatlo nie ma odbic, wiec metal dostaje PBR + otoczenie sali.
+    ['Metal_zyrandol', new THREE.MeshStandardMaterial({
+      color: 0xb38a4c, metalness: 1, roughness: 0.24, envMapIntensity: 0.3,
+    })],
   ]);
   for (const [name, textures] of baked) {
     room.getObjectByName(name).traverse((node) => {
@@ -275,6 +365,7 @@ async function initViewer() {
   renderer.toneMapping = THREE.AgXToneMapping;
   // Blender's exposure is expressed in stops.
   renderer.toneMappingExposure = 2 ** 1.5;
+  scene.environment = roomEnvironment(renderer);
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', 'Model ściany S. Przeciągnij lub użyj Shift ze strzałkami, żeby obrócić widok. Strzałki lewo i prawo zmieniają wzór.');
@@ -459,4 +550,50 @@ async function initViewer() {
   zoomTools.hidden = false;
   status.textContent = '';
   patternNavigation.hidden = patterns.length < 2;
+  introLook();
+
+  // Po wejsciu kamera sama sie chwile rozglada, zeby bylo widac, ze widokiem mozna ruszac.
+  function introLook() {
+    const hint = document.createElement('p');
+    hint.id = 'look-hint';
+    hint.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8M8 12l3-3M8 12l3 3M16 12l-3-3M16 12l-3 3"/></svg>Przeciągnij, żeby się rozejrzeć';
+    viewport.append(hint);
+    let cancelled = false;
+    let hideTimer;
+    const hide = () => {
+      hint.classList.add('is-hidden');
+      setTimeout(() => hint.remove(), 600);
+    };
+    const stop = () => {
+      if (cancelled) return;
+      cancelled = true;
+      clearTimeout(hideTimer);
+      hide();
+    };
+    for (const type of ['pointerdown', 'wheel', 'keydown']) {
+      canvas.addEventListener(type, stop, { once: true, passive: true });
+    }
+    if (prefersReducedMotion.matches) {
+      hideTimer = setTimeout(hide, 5000);
+      return;
+    }
+    const baseYaw = rotation.y;
+    const basePitch = rotation.x;
+    const duration = 3800;
+    let start;
+    function frame(time) {
+      if (cancelled) return;
+      start ??= time;
+      const t = Math.min((time - start) / duration, 1);
+      // spojrzenie w lewo, w prawo i powrot; obwiednia sin(pi t) daje miekki start i koniec
+      const envelope = Math.sin(Math.PI * t);
+      rotation.y = baseYaw + 0.28 * Math.sin(2 * Math.PI * t) * envelope;
+      rotation.x = basePitch + 0.035 * envelope;
+      roomCamera.quaternion.setFromEuler(rotation);
+      render();
+      if (t < 1) requestAnimationFrame(frame);
+      else hideTimer = setTimeout(hide, 1600);
+    }
+    setTimeout(() => !cancelled && requestAnimationFrame(frame), 700);
+  }
 }
