@@ -87,7 +87,13 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
         // N and S are shipped with painted albedo. Start from bare plaster
         // above the baseboard so the browser can choose the wall S pattern.
         bool aboveBaseboard = paintUV.y < 1.0 - 0.08 / 4.2;
-        if (cleanPlaster && aboveBaseboard) pigment = vec3(0.86, 0.855, 0.83);
+        if (cleanPlaster) {
+          // Tynk i listwa rysowane w shaderze (ostra krawedz), zamiast z zaszumionego wypalonego albedo.
+          float edge = 1.0 - 0.08 / 4.2;
+          float aa = fwidth(paintUV.y) * 0.75;
+          float baseboard = smoothstep(edge - aa, edge + aa, paintUV.y);
+          pigment = mix(vec3(0.86, 0.855, 0.83), vec3(0.16, 0.155, 0.15), baseboard);
+        }
         vec3 lighting = decodeLight(bakedUV);
         #ifdef WALL_TRIM
           float wallNormalY = normalize(worldNormal).y;
@@ -118,6 +124,15 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
             float archFringe = 1.0 - smoothstep(0.012, 0.075, fromArch);
             float cornerFringe = 1.0 - smoothstep(0.003, 0.025, fromCorner);
             lighting = mix(lighting, min(lighting, innerLight), max(archFringe, cornerFringe));
+          }
+          // Przy podlodze wypalone swiatlo jest zaszumione (poszarpana listwa). Bierzemy je
+          // z gladkiego miejsca ~17 cm wyzej i dodajemy lekki cien kontaktowy.
+          float fromFloor = 1.0 - paintUV.y;
+          if (fromFloor < 0.04 && abs(determinant) > 1e-9) {
+            vec2 bakeUp = (bakeDy * paintDx.x - bakeDx * paintDy.x) / determinant;
+            vec3 upLight = decodeLight(bakedUV - bakeUp * (0.04 - fromFloor));
+            float contact = mix(0.8, 1.0, smoothstep(0.0, 0.04, fromFloor));
+            lighting = mix(upLight * contact, lighting, smoothstep(0.03, 0.04, fromFloor));
           }
         #endif
         if (hasWallPattern && aboveBaseboard) {
@@ -286,7 +301,7 @@ async function initViewer() {
         pattern: (wallFace && wallPatterns[name.at(-1)]) || emptyPattern,
         hasLightUV: node.geometry.hasAttribute('uv1'),
         brass: node.material.name === 'Metal_zyrandol',
-        cleanPlaster: ['Sciana_N_mural', 'Sciana_S_mural'].includes(node.material.name),
+        cleanPlaster: /^Sciana_[NESW]_mural$/.test(node.material.name),
       };
       node.material = bakedMaterial(materials);
     });
