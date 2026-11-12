@@ -197,3 +197,6 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 .pager, #zoom-tools { border-color: #ffffff14; background: #2e2a25; }
 .pager button + button { border-inline-start-color: #ffffff10; }
 .pager button:hover, #zoom-tools button:hover { background: #ffffff0f; }
+
+/* Drugi rzad przyciskow (oswietlenie) blizej pierwszego */
+.tabs + .tabs { margin-top: .5rem; }

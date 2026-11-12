@@ -37,6 +37,8 @@
 !/Model_3D_mural/web/wzory/PSD-S-*.webp
 !/Model_3D_mural/web/wzory/pary.json
 !/Model_3D_mural/web/wzory/ES-*.webp
+!/Model_3D_mural/web/wzory/ES-woluty-fale-*.png
+!/Model_3D_mural/web/wzory/pokoj-kwadratowy-*.webp
 !/.github/
 !/Model_3D_mural/web/vendor/
 !/Model_3D_mural/web/vendor-three.mjs
@@ -45,3 +47,14 @@
 !/CLAUDE.md
 !/GEMINI.md
 !/Model_3D_mural/web/ujecia/
+!/Model_3D_mural/web/sala2/
+/Model_3D_mural/web/sala2/*
+!/Model_3D_mural/web/sala2/wzory/
+/Model_3D_mural/web/sala2/wzory/*
+!/Model_3D_mural/web/sala2/wzory/pary.json
+!/Model_3D_mural/web/sala2/wzory/S2-woluty-*.webp
+!/Model_3D_mural/web/sala2/manifest.json
+!/Model_3D_mural/web/sala2/wnetrze.glb
+!/Model_3D_mural/web/sala2/*_alb.jpg
+!/Model_3D_mural/web/sala2/*_lm.jpg
+!/Model_3D_mural/web/sala2/*_lm_led.jpg

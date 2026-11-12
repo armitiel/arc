@@ -1,9 +1,11 @@
 [
   {
-    "label": "Woluty",
+    "id": "woluty",
+    "label": "Wzór 3",
+    "featured": true,
     "walls": {
-      "E": "./wzory/ES-woluty-E.webp?v=2",
-      "S": "./wzory/ES-woluty-S.webp?v=2"
+      "E": "./wzory/ES-woluty-fale-E.png?v=1",
+      "S": "./wzory/ES-woluty-fale-S.png?v=1"
     }
   },
   {
@@ -13,5 +15,27 @@
       "S": "./wzory/ES-splot-S.webp?v=2"
     },
     "hidden": true
+  },
+  {
+    "id": "pokoj-kwadratowy",
+    "label": "Pokój kwadratowy · cztery ściany",
+    "featured": false,
+    "walls": {
+      "N": "./wzory/pokoj-kwadratowy-N.webp?v=3",
+      "E": "./wzory/pokoj-kwadratowy-E.webp?v=3",
+      "S": "./wzory/pokoj-kwadratowy-S.webp?v=3",
+      "W": "./wzory/pokoj-kwadratowy-W.webp?v=3"
+    }
+  },
+  {
+    "id": "pokoj-kwadratowy-smukly",
+    "label": "Pokój kwadratowy · delikatny ornament",
+    "hidden": true,
+    "walls": {
+      "N": "./wzory/pokoj-kwadratowy-smukly-N.webp?v=1",
+      "E": "./wzory/pokoj-kwadratowy-smukly-E.webp?v=1",
+      "S": "./wzory/pokoj-kwadratowy-smukly-S.webp?v=1",
+      "W": "./wzory/pokoj-kwadratowy-smukly-W.webp?v=1"
+    }
   }
 ]

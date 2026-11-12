@@ -1,0 +1,19 @@
+[
+  {
+    "id": "sala2-woluty-fale",
+    "label": "Sala 2 · Woluty i fale",
+    "featured": true,
+    "camera": {
+      "pos": [-1.2, 1.55, 1.2],
+      "target": [1.9, 1.45, -1.9],
+      "vfov": 68,
+      "minHfov": 84
+    },
+    "walls": {
+      "N": "./sala2/wzory/S2-woluty-N.webp?v=1",
+      "E": "./sala2/wzory/S2-woluty-E.webp?v=1",
+      "S": "./sala2/wzory/S2-woluty-S.webp?v=1",
+      "W": "./sala2/wzory/S2-woluty-W.webp?v=1"
+    }
+  }
+]

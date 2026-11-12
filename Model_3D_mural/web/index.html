@@ -12,6 +12,14 @@
   <header>
     <p class="label">Wstępna koncepcja</p>
     <h1 class="visually-hidden">Mural</h1>
+    <div class="tabs" role="group" aria-label="Pomieszczenie">
+      <button type="button" data-sala="1" aria-pressed="true">Sala 1</button>
+      <button type="button" data-sala="2" aria-pressed="false">Sala 2</button>
+    </div>
+    <div class="tabs" id="light-tabs" role="group" aria-label="Oświetlenie" hidden>
+      <button type="button" data-light="dzien" aria-pressed="true">Dzień</button>
+      <button type="button" data-light="led" aria-pressed="false">LED</button>
+    </div>
   </header>
   <figure class="stage" id="model">
     <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">

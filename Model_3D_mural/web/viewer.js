@@ -15,7 +15,22 @@ const patternCaption = document.querySelector('#pattern-caption');
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster, wallFace, wallTrim, pattern }) {
+// Sala 1 = sklepienie krzyzowe (pliki w web/), Sala 2 = kwadratowy pokoj (pliki w web/sala2/), wybor: ?sala=2
+const ROOM = new URLSearchParams(location.search).get('sala') === '2'
+  ? { id: '2', base: './sala2/', vault: false, baseFrac: 0.07 / 2.82 }
+  : { id: '1', base: './', vault: true, baseFrac: 0.08 / 4.2 };
+for (const button of document.querySelectorAll('[data-sala]')) {
+  button.setAttribute('aria-pressed', String(button.dataset.sala === ROOM.id));
+  button.addEventListener('click', () => {
+    if (button.dataset.sala === ROOM.id) return;
+    const url = new URL(location.href);
+    url.searchParams.set('sala', button.dataset.sala);
+    url.searchParams.delete('wzor');
+    location.href = url;
+  });
+}
+
+function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster, wallFace, wallTrim, pattern, vault = true, baseFrac = 0.08 / 4.2 }) {
   return new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms: {
@@ -23,18 +38,19 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
       lightmap: { value: lightmap },
       lmL: { value: L },
       lmK: { value: K },
+      baseFrac: { value: baseFrac },
       brass: { value: brass },
       cleanPlaster: { value: cleanPlaster },
       wallPattern: pattern.texture,
       incomingPattern: pattern.incoming,
       slideOffset: pattern.offset,
       hasWallPattern: pattern.enabled,
-      twoWallSlide: pattern.twoWallSlide,
+      slideWallCount: pattern.slideWallCount,
       wallIndex: { value: pattern.wallIndex },
     },
     defines: {
       ...(hasLightUV ? { LIGHT_UV_SECONDARY: 1, USE_UV1: 1 } : {}),
-      ...(wallFace ? { SMOOTH_VAULT_EDGE: 1 } : {}),
+      ...(wallFace && vault ? { SMOOTH_VAULT_EDGE: 1 } : {}),
       ...(wallTrim ? { WALL_TRIM: 1 } : {}),
     },
     vertexShader: `
@@ -64,13 +80,14 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
       uniform sampler2D lightmap;
       uniform float lmL;
       uniform float lmK;
+      uniform float baseFrac;
       uniform bool brass;
       uniform bool cleanPlaster;
       uniform sampler2D wallPattern;
       uniform sampler2D incomingPattern;
       uniform float slideOffset;
       uniform bool hasWallPattern;
-      uniform bool twoWallSlide;
+      uniform float slideWallCount;
       uniform float wallIndex;
       varying vec2 bakedUV;
       varying vec2 paintUV;
@@ -86,10 +103,10 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
         vec3 pigment = pow(texture2D(albedo, bakedUV).rgb, vec3(2.2));
         // N and S are shipped with painted albedo. Start from bare plaster
         // above the baseboard so the browser can choose the wall S pattern.
-        bool aboveBaseboard = paintUV.y < 1.0 - 0.08 / 4.2;
+        bool aboveBaseboard = paintUV.y < 1.0 - baseFrac;
         if (cleanPlaster) {
           // Tynk i listwa rysowane w shaderze (ostra krawedz), zamiast z zaszumionego wypalonego albedo.
-          float edge = 1.0 - 0.08 / 4.2;
+          float edge = 1.0 - baseFrac;
           float aa = fwidth(paintUV.y) * 0.75;
           float baseboard = smoothstep(edge - aa, edge + aa, paintUV.y);
           pigment = mix(vec3(0.86, 0.855, 0.83), vec3(0.16, 0.155, 0.15), baseboard);
@@ -143,7 +160,8 @@ function bakedMaterial({ albedo, lightmap, L, K, hasLightUV, brass, cleanPlaster
             vec4 incomingPaint = texture2D(incomingPattern, paintUV);
             vec3 incoming = mix(pigment, pow(incomingPaint.rgb, vec3(2.2)), incomingPaint.a);
             float edge = slideOffset > 0.0 ? 1.0 - slideOffset : -slideOffset;
-            float slideX = twoWallSlide ? (wallIndex + paintUV.x) * 0.5 : paintUV.x;
+            float slideX = slideWallCount > 1.0
+              ? (wallIndex + paintUV.x) / slideWallCount : paintUV.x;
             float reveal = smoothstep(edge - 0.035, edge + 0.035, slideX);
             current = mix(current, incoming, slideOffset > 0.0 ? reveal : 1.0 - reveal);
           }
@@ -190,22 +208,28 @@ function roomEnvironment(renderer) {
 
 async function initViewer() {
   const [response, patternResponse, pairsResponse] = await Promise.all([
-    fetch('./manifest.json'),
-    fetch('./wzory/psd.json', { cache: 'no-cache' }),
-    fetch('./wzory/pary.json', { cache: 'no-cache' }),
+    fetch(ROOM.base + 'manifest.json'),
+    ROOM.vault ? fetch('./wzory/psd.json', { cache: 'no-cache' }) : null,
+    fetch(ROOM.base + 'wzory/pary.json', { cache: 'no-cache' }).catch(() => null),
   ]);
   if (!response.ok) throw new Error('Nie można odczytać manifestu modelu.');
   const manifest = await response.json();
+  let patterns = [];
+  if (ROOM.vault) {
   if (!patternResponse.ok) throw new Error('Nie można odczytać listy wzorów.');
   const catalog = await patternResponse.json();
   if (!pairsResponse.ok) throw new Error('Nie można odczytać wzorów narożnych.');
-  const patterns = [
+  patterns = [
     ...(catalog.S ?? [])
       .filter(({ id }) => id !== 'PSD-S-2')
       .map(({ label, url }) => ({ label, walls: { S: url } })),
     // wzor z "hidden": true w pary.json jest schowany (plik zostaje)
     ...(await pairsResponse.json()).filter((pattern) => !pattern.hidden),
   ];
+  } else if (pairsResponse?.ok) {
+    // wzory sali 2: web/sala2/wzory/pary.json (ten sam format co w sali 1)
+    patterns = (await pairsResponse.json()).filter((pattern) => !pattern.hidden);
+  }
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#5e584f');
 
@@ -217,12 +241,28 @@ async function initViewer() {
     vfov: 56,
     minHfov: 84,
   };
-  let activePose = front;
-  roomCamera.position.fromArray(front.pos);
-  roomCamera.lookAt(new THREE.Vector3().fromArray(front.target));
+  const wholeRoom = {
+    pos: [0, 1.65, 0],
+    target: [0.8, 2.05, 2.8],
+    vfov: 68,
+    minHfov: 104,
+  };
+  const roomStart = manifest.cameras.find((pose) => pose.name === 'S2_start');
+  function poseFor(pattern) {
+    if (pattern?.camera) return pattern.camera;
+    if (!ROOM.vault && roomStart) return roomStart;
+    if (pattern?.walls.N || pattern?.walls.W) return wholeRoom;
+    return pattern?.walls.E ? corner : front;
+  }
+  const requestedPattern = new URLSearchParams(location.search).get('wzor');
+  const initialIndex = Math.max(0, patterns.findIndex((pattern) =>
+    pattern.id === requestedPattern || (!requestedPattern && pattern.featured)));
+  let activePose = poseFor(patterns[initialIndex]);
+  roomCamera.position.fromArray(activePose.pos);
+  roomCamera.lookAt(new THREE.Vector3().fromArray(activePose.target));
 
   const loader = new THREE.TextureLoader();
-  const muralWalls = ['E', 'S'];
+  const muralWalls = ['E', 'S', 'W', 'N'];
   const blank = new THREE.DataTexture(new Uint8Array(4), 1, 1);
   blank.needsUpdate = true;
 
@@ -244,32 +284,32 @@ async function initViewer() {
   }
 
   const [{ scene: room }, baked, initialTextures] = await Promise.all([
-    new GLTFLoader().loadAsync('./wnetrze.glb', (event) => {
+    new GLTFLoader().loadAsync(ROOM.base + 'wnetrze.glb', (event) => {
       if (event.total) setLoaderProgress(0.05 + 0.5 * event.loaded / event.total);
     }),
     Promise.all(Object.entries(manifest.objects).map(async ([name, entry]) => {
       const [albedo, lightmap] = await Promise.all([
-        loader.loadAsync('./' + entry.alb),
-        loader.loadAsync('./' + entry.lm),
+        loader.loadAsync(ROOM.base + entry.alb),
+        loader.loadAsync(ROOM.base + entry.lm),
       ]);
       albedo.flipY = false;
       lightmap.flipY = false;
       lightmap.generateMipmaps = false;
       lightmap.minFilter = THREE.LinearFilter;
-      return [name, { albedo, lightmap, L: entry.L, K: entry.K }];
+      return [name, { albedo, lightmap, L: entry.L, K: entry.K, variants: entry.variants }];
     })),
-    loadPatternTextures(patterns[0]),
+    loadPatternTextures(patterns[initialIndex]),
   ]);
   const offset = { value: 0 };
-  const twoWallSlide = { value: false };
+  const slideWallCount = { value: 1 };
   const emptyPattern = {
     texture: { value: blank }, incoming: { value: blank },
-    offset, twoWallSlide, wallIndex: 0, enabled: { value: false },
+    offset, slideWallCount, wallIndex: 0, enabled: { value: false },
   };
   const wallPatterns = Object.fromEntries(muralWalls.map((wall, wallIndex) => [wall, {
     texture: { value: initialTextures[wall] },
     incoming: { value: blank },
-    offset, twoWallSlide, wallIndex, enabled: { value: true },
+    offset, slideWallCount, wallIndex, enabled: { value: true },
   }]));
   const basicMaterials = new Map([
     ['Zarowka', new THREE.MeshBasicMaterial({ color: 0xfff1d6, toneMapped: false })],
@@ -284,6 +324,7 @@ async function initViewer() {
       color: 0xb38a4c, metalness: 1, roughness: 0.24, envMapIntensity: 0.3,
     })],
   ]);
+  const lightTargets = [];
   for (const [name, textures] of baked) {
     room.getObjectByName(name).traverse((node) => {
       if (!node.isMesh) return;
@@ -297,13 +338,16 @@ async function initViewer() {
       const materials = {
         ...textures,
         wallFace,
-        wallTrim: isWall && !wallFace,
+        wallTrim: ROOM.vault && isWall && !wallFace,
+        vault: ROOM.vault,
+        baseFrac: ROOM.baseFrac,
         pattern: (wallFace && wallPatterns[name.at(-1)]) || emptyPattern,
         hasLightUV: node.geometry.hasAttribute('uv1'),
         brass: node.material.name === 'Metal_zyrandol',
         cleanPlaster: /^Sciana_[NESW]_mural$/.test(node.material.name),
       };
       node.material = bakedMaterial(materials);
+      lightTargets.push([name, node.material]);
     });
   }
   scene.add(room);
@@ -329,6 +373,49 @@ async function initViewer() {
     renderer.render(scene, roomCamera);
   }
 
+  // Warianty swiatla (np. dzien / LED w suficie): podmiana lightmap bez przeladowania strony.
+  const lightButtons = [...document.querySelectorAll('[data-light]')];
+  const lightGroup = document.querySelector('#light-tabs');
+  const lightCache = new Map();
+  let activeLight = 'dzien';
+  async function setLighting(id) {
+    if (id === activeLight) return;
+    try {
+      const sets = await Promise.all(baked.map(async ([name, textures]) => {
+        const variant = textures.variants?.[id];
+        if (id === 'dzien' || !variant) return [name, textures.lightmap, textures.L];
+        const key = name + ':' + id;
+        if (!lightCache.has(key)) {
+          lightCache.set(key, loader.loadAsync(ROOM.base + variant.lm).then((texture) => {
+            texture.flipY = false;
+            texture.generateMipmaps = false;
+            texture.minFilter = THREE.LinearFilter;
+            return texture;
+          }));
+        }
+        return [name, await lightCache.get(key), variant.L];
+      }));
+      const byName = new Map(sets.map(([name, texture, L]) => [name, { texture, L }]));
+      for (const [name, material] of lightTargets) {
+        const set = byName.get(name);
+        material.uniforms.lightmap.value = set.texture;
+        material.uniforms.lmL.value = set.L;
+      }
+      activeLight = id;
+      for (const button of lightButtons) button.setAttribute('aria-pressed', String(button.dataset.light === id));
+      render();
+    } catch {
+      status.textContent = 'Nie udało się wczytać tego oświetlenia.';
+    }
+  }
+  if (lightGroup && (manifest.lighting?.length ?? 0) > 1) {
+    for (const button of lightButtons) {
+      button.setAttribute('aria-pressed', String(button.dataset.light === activeLight));
+      button.addEventListener('click', () => setLighting(button.dataset.light));
+    }
+    lightGroup.hidden = false;
+  }
+
   const maxZoom = 3;
   const zoomStep = 1.25;
   function setZoom(value) {
@@ -350,10 +437,11 @@ async function initViewer() {
     if (next !== roomCamera.zoom) setZoom(next);
   }, { passive: false });
 
-  let index = patterns.length ? 0 : -1;
+  let index = patterns.length ? initialIndex : -1;
 
   function updatePatternCaption() {
-    patternCaption.textContent = 'Wzór ' + (index + 1);
+    patternCaption.textContent = patterns[index].id
+      ? patterns[index].label : 'Wzór ' + (index + 1);
   }
   let busy = false;
   let stopIntroLook;
@@ -406,9 +494,11 @@ async function initViewer() {
         wallPatterns[wall].incoming.value = texture;
       }
 
-      const nextPose = pattern.walls.E ? corner : front;
+      const nextPose = poseFor(pattern);
       if (direction && index >= 0 && !prefersReducedMotion.matches) {
-        twoWallSlide.value = activePose === corner || nextPose === corner;
+        slideWallCount.value = new Set([
+          ...Object.keys(patterns[index].walls), ...Object.keys(pattern.walls),
+        ]).size;
         await animatePattern(direction, nextPose);
       }
 
@@ -528,6 +618,7 @@ async function initViewer() {
   resizeCamera();
   setZoom(1);
   if (index >= 0) updatePatternCaption();
+  else patternCaption.textContent = 'Czyste ściany · bez wzoru';
   viewport.prepend(canvas);
   zoomTools.hidden = false;
   status.textContent = '';
