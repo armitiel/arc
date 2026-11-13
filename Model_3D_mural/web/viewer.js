@@ -414,7 +414,15 @@ async function initViewer() {
     }
   }
   if (lightGroup && lightToggle && (manifest.lighting?.length ?? 0) > 1) {
-    lightToggle.addEventListener('click', () => setLighting(activeLight === 'led' ? 'dzien' : 'led'));
+    const lightHintKey = 'arc-led-toggle-used';
+    let lightUsed = false;
+    try { lightUsed = localStorage.getItem(lightHintKey) === '1'; } catch {}
+    lightToggle.classList.toggle('needs-hint', !lightUsed);
+    lightToggle.addEventListener('click', () => {
+      lightToggle.classList.remove('needs-hint');
+      try { localStorage.setItem(lightHintKey, '1'); } catch {}
+      setLighting(activeLight === 'led' ? 'dzien' : 'led');
+    });
     lightGroup.hidden = false;
   }
 

@@ -208,6 +208,13 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 #light-toggle[aria-pressed="true"] { background: #ead8be; color: #59401e; border-color: #ead8be; box-shadow: 0 0 1rem #ead8be33; }
 #light-toggle[aria-pressed="true"] .bulb-rays { visibility: visible; }
 #light-toggle:disabled { cursor: wait; opacity: .65; }
+@keyframes bulb-hint {
+  0%, 100% { background: #2e2a25e8; color: #f2e9de; box-shadow: 0 2px 8px #0003; }
+  50% { background: #68583feF; color: #fff3cf; box-shadow: 0 0 1rem #ead8be66; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #light-toggle.needs-hint { animation: bulb-hint 2.4s ease-in-out infinite; }
+}
 @media (forced-colors: active) {
   .tabs button[aria-pressed="true"] { border: 2px solid Highlight; color: HighlightText; background: Highlight; box-shadow: none; }
 }
