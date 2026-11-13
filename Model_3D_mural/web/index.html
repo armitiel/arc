@@ -16,7 +16,10 @@
       <button type="button" data-sala="1" aria-pressed="true">Sala 1</button>
       <button type="button" data-sala="2" aria-pressed="false">Sala 2</button>
     </div>
-    <div class="tabs" id="light-tabs" role="group" aria-label="Oświetlenie" hidden>
+  </header>
+  <figure class="stage" id="model">
+    <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">
+    <div id="light-tabs" role="group" aria-label="Oświetlenie" hidden>
       <button type="button" id="light-toggle" aria-label="Oświetlenie LED" aria-pressed="false" title="Włącz LED">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M9 17v-1.5a6 6 0 1 1 6 0V17M9 17h6M9.5 20h5M11 22h2"/>
@@ -24,9 +27,6 @@
         </svg>
       </button>
     </div>
-  </header>
-  <figure class="stage" id="model">
-    <div class="frame" id="viewport" aria-label="Interaktywny model wnętrza">
       <div id="loader" role="progressbar" aria-label="Wczytywanie modelu 3D" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <p class="loader-label">Wczytuję model 3D</p>
         <div class="loader-track"><div class="loader-fill"></div></div>
