@@ -19,6 +19,7 @@
   {
     "id": "pokoj-kwadratowy",
     "label": "Pokój kwadratowy · cztery ściany",
+    "hidden": true,
     "featured": false,
     "walls": {
       "N": "./wzory/pokoj-kwadratowy-N.webp?v=3",
