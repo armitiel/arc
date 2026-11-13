@@ -374,12 +374,13 @@ async function initViewer() {
   }
 
   // Warianty swiatla (np. dzien / LED w suficie): podmiana lightmap bez przeladowania strony.
-  const lightButtons = [...document.querySelectorAll('[data-light]')];
+  const lightToggle = document.querySelector('#light-toggle');
   const lightGroup = document.querySelector('#light-tabs');
   const lightCache = new Map();
   let activeLight = 'dzien';
   async function setLighting(id) {
-    if (id === activeLight) return;
+    if (id === activeLight || lightToggle.disabled) return;
+    lightToggle.disabled = true;
     try {
       const sets = await Promise.all(baked.map(async ([name, textures]) => {
         const variant = textures.variants?.[id];
@@ -402,17 +403,18 @@ async function initViewer() {
         material.uniforms.lmL.value = set.L;
       }
       activeLight = id;
-      for (const button of lightButtons) button.setAttribute('aria-pressed', String(button.dataset.light === id));
+      lightToggle.setAttribute('aria-pressed', String(id === 'led'));
+      lightToggle.title = id === 'led' ? 'Wyłącz LED' : 'Włącz LED';
+      status.textContent = '';
       render();
     } catch {
       status.textContent = 'Nie udało się wczytać tego oświetlenia.';
+    } finally {
+      lightToggle.disabled = false;
     }
   }
-  if (lightGroup && (manifest.lighting?.length ?? 0) > 1) {
-    for (const button of lightButtons) {
-      button.setAttribute('aria-pressed', String(button.dataset.light === activeLight));
-      button.addEventListener('click', () => setLighting(button.dataset.light));
-    }
+  if (lightGroup && lightToggle && (manifest.lighting?.length ?? 0) > 1) {
+    lightToggle.addEventListener('click', () => setLighting(activeLight === 'led' ? 'dzien' : 'led'));
     lightGroup.hidden = false;
   }
 

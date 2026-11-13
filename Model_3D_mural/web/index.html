@@ -17,8 +17,12 @@
       <button type="button" data-sala="2" aria-pressed="false">Sala 2</button>
     </div>
     <div class="tabs" id="light-tabs" role="group" aria-label="Oświetlenie" hidden>
-      <button type="button" data-light="dzien" aria-pressed="true">Dzień</button>
-      <button type="button" data-light="led" aria-pressed="false">LED</button>
+      <button type="button" id="light-toggle" aria-label="Oświetlenie LED" aria-pressed="false" title="Włącz LED">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 17v-1.5a6 6 0 1 1 6 0V17M9 17h6M9.5 20h5M11 22h2"/>
+          <path class="bulb-rays" d="M12 1v-1M4.2 4.2 2.8 2.8M19.8 4.2l1.4-1.4M2 10H0M22 10h2"/>
+        </svg>
+      </button>
     </div>
   </header>
   <figure class="stage" id="model">

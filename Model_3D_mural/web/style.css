@@ -203,9 +203,12 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 .tabs:not(#light-tabs) button[aria-pressed="true"] { border-color: #ead8be; }
 .layout header .tabs + .tabs { margin-top: .5rem; }
 #light-tabs { gap: .5rem; }
-#light-tabs button { grid-column: 2; }
-#light-tabs button { min-height: 2.75rem; padding: .45rem .6rem; font-size: .875rem; border-color: #ffffff20; color: #cbbfb0; background: #2e2a25; }
-#light-tabs button[aria-pressed="true"] { background: #474035; color: #fff3de; border-color: #b5a081; box-shadow: inset 0 -2px #d1bd9f; }
+#light-toggle { grid-column: 2; justify-self: center; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: .6rem; border-radius: 50%; border-color: #ffffff20; color: #cbbfb0; background: #2e2a25; }
+#light-toggle svg { width: 1.5rem; height: 1.5rem; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#light-toggle .bulb-rays { visibility: hidden; }
+#light-toggle[aria-pressed="true"] { background: #ead8be; color: #59401e; border-color: #ead8be; box-shadow: 0 0 1rem #ead8be33; }
+#light-toggle[aria-pressed="true"] .bulb-rays { visibility: visible; }
+#light-toggle:disabled { cursor: wait; opacity: .65; }
 @media (forced-colors: active) {
   .tabs button[aria-pressed="true"] { border: 2px solid Highlight; color: HighlightText; background: Highlight; box-shadow: none; }
 }
