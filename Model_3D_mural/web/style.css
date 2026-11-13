@@ -201,10 +201,10 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 /* Sale sa glownym wyborem; oswietlenie ma te same kolumny, lecz lzejszy styl. */
 .tabs:not(#light-tabs) button { min-height: 3.25rem; font-weight: 650; border-color: #a6947e; }
 .tabs:not(#light-tabs) button[aria-pressed="true"] { border-color: #ead8be; }
-.layout header .tabs + .tabs { margin-top: .5rem; }
+.layout header .tabs + .tabs { margin-top: 1rem; }
 #light-tabs { gap: .5rem; }
-#light-toggle { grid-column: 2; justify-self: center; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: .6rem; border-radius: 50%; border-color: #ffffff20; color: #cbbfb0; background: #2e2a25; }
-#light-toggle svg { width: 1.5rem; height: 1.5rem; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#light-toggle { grid-column: 2; justify-self: center; display: grid; place-items: center; width: 3rem; height: 3rem; padding: .6rem; border-radius: 50%; border-color: #ffffff20; color: #cbbfb0; background: #2e2a25; }
+#light-toggle svg { width: 1.75rem; height: 1.75rem; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 #light-toggle .bulb-rays { visibility: hidden; }
 #light-toggle[aria-pressed="true"] { background: #ead8be; color: #59401e; border-color: #ead8be; box-shadow: 0 0 1rem #ead8be33; }
 #light-toggle[aria-pressed="true"] .bulb-rays { visibility: visible; }
