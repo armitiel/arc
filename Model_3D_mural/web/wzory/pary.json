@@ -4,8 +4,8 @@
     "label": "Wzór 3",
     "featured": true,
     "walls": {
-      "E": "./wzory/ES-woluty-fale-E.png?v=1",
-      "S": "./wzory/ES-woluty-fale-S.png?v=1"
+      "E": "./wzory/ES-woluty-fale-E.png?v=2-oliwka-cegla",
+      "S": "./wzory/ES-woluty-fale-S.png?v=2-oliwka-cegla"
     }
   },
   {
