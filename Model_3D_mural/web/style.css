@@ -203,6 +203,7 @@ figcaption { margin-top: .65rem; font-size: .8rem; color: #cbbfb0; }
 .tabs:not(#light-tabs) button[aria-pressed="true"] { border-color: #ead8be; }
 .layout header .tabs + .tabs { margin-top: .5rem; }
 #light-tabs { gap: .5rem; }
+#light-tabs button { grid-column: 2; }
 #light-tabs button { min-height: 2.75rem; padding: .45rem .6rem; font-size: .875rem; border-color: #ffffff20; color: #cbbfb0; background: #2e2a25; }
 #light-tabs button[aria-pressed="true"] { background: #474035; color: #fff3de; border-color: #b5a081; box-shadow: inset 0 -2px #d1bd9f; }
 @media (forced-colors: active) {
